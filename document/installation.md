@@ -1,486 +1,332 @@
 # Termux OpenClaw 详细安装手册
 
-> **版本**: v1.0.0-alpha  
+> **版本**: v1.0.0-alpha (refactored)
 > **最后更新**: 2026-03-22
-
----
 
 ## 📋 目录
 
 1. [概述](#概述)
 2. [前置检查](#前置检查)
 3. [依赖安装](#依赖安装)
-4. [源码获取](#源码获取)
-5. [构建过程](#构建过程)
-6. [安装配置](#安装配置)
-7. [后续优化](#后续优化)
-8. [命令行参考](#命令行参考)
+4. [运行安装脚本](#运行安装脚本)
+5. [配置说明](#配置说明)
+6. [启动服务](#启动服务)
+7. [后续管理](#后续管理)
+8. [故障排查](#故障排查)
 
 ---
 
 ## 📝 概述
 
-本手册提供在 Android Termux 环境中从源码编译和安装 OpenClaw 的完整步骤。适用于需要自定义编译选项或理解整个安装流程的高级用户。
+本手册提供在 Android Termux 环境中安装 OpenClaw-CN（AI 智能助手系统）的完整步骤。OpenClaw 是一个基于 Node.js 的多渠道 AI 助手，支持 WhatsApp、Telegram、飞书、钉钉等平台。
 
 ### 预期时间
 
 | 步骤 | 预计时长 | 影响因素 |
 |------|----------|----------|
-| 依赖安装 | 5-15 分钟 | 网络速度、设备性能 |
-| 源码下载 | 2-5 分钟 | 网络速度（约 50-100 MB） |
-| 编译构建 | 10-60 分钟 | CPU 核心数、主频、散热 |
-| 安装验证 | 1 分钟 | - |
+| 环境准备 | 5-10 分钟 | 网络速度、设备性能 |
+| 依赖下载 | 10-30 分钟 | 网络速度 |
+| 构建 | 5-15 分钟 | CPU 性能 |
 
-**总计**: 约 20-80 分钟，取决于设备性能。
+**总计**: 约 20-60 分钟
 
 ---
 
 ## 🔍 前置检查
 
-### 1.1 检查 Termux 版本
+### 2.1 检查 Termux 版本
 
 ```bash
 termux-info
 ```
 
-确保以下信息符合要求：
-- **Termux 版本**: ≥ 0.101.0
+确保符合要求：
+- **Termux 版本**: ≥ 0.101.0（建议从 F-Droid 安装）
 - **API Level**: ≥ 24 (Android 7.0)
-- **架构**: aarch64 (ARM64) 推荐
+- **架构**: ARM64 (aarch64) 推荐
 
-输出示例：
-```
-Termux Info:
-  API level: 30
-  ABI: aarch64
-  SDK: 29
-```
-
-### 1.2 检查存储权限
-
-确保 Termux 已获得存储访问权限：
+### 2.2 检查存储权限
 
 ```bash
-# 查看存储目录是否可访问
-ls ~/storage 2>/dev/null
-
-# 如未授权，运行：
 termux-setup-storage
 ```
 
-首次运行 `termux-setup-storage` 后，需要**手动授权** Termux 访问存储权限（弹出系统对话框）。
+首次运行需要手动授权存储权限。
 
-### 1.3 检查磁盘空间
+### 2.3 检查磁盘空间
 
 ```bash
-# 查看可用空间（至少需要 1GB）
 df -h $HOME
 ```
 
-推荐：剩余空间 ≥ 2 GB（包含源码、构建文件和最终安装）。
+建议：剩余空间 ≥ 2 GB
 
-### 1.4 检查 CPU 信息
+### 2.4 预检查环境
+
+可以运行本项目的检查脚本：
 
 ```bash
-# 查看 CPU 架构和核心数
-uname -m
-nproc
+cd d:\workspace\git\termux-install-openclaw
+./scripts/check-env.sh
 ```
-
-建议：ARM64 设备，4 核心及以上可获得较好编译速度。
 
 ---
 
 ## 📦 依赖安装
 
-### 2.1 更新包管理器
+### 3.1 更新包管理器
 
 ```bash
 pkg update -y
 pkg upgrade -y
 ```
 
-**注意**：
-- 如果提示 "Do you want to continue?"，输入 `Y`
-- 确保网络通畅（可访问 Termux 镜像源）
-
-### 2.2 安装基础工具链
+### 3.2 安装基础工具
 
 ```bash
-pkg install -y \
-    git \
-    curl \
-    wget \
-    ca-certificates \
-    build-essential \
-    cmake \
-    pkg-config
+pkg install -y git curl wget ca-certificates
 ```
 
-**解释**：
-- `build-essential`: GCC 编译器、make、binutils
-- `cmake`: 构建系统生成器
-- `pkg-config`: 库依赖检测工具
-
-### 2.3 安装 SDL2 多媒体库
-
-OpenClaw 依赖 SDL2 及其扩展库进行图形、音频和输入处理：
+安装脚本会自动安装 Node.js ≥ 22，但也可以手动安装：
 
 ```bash
-pkg install -y \
-    sdl2 \
-    sdl2_image \
-    sdl2_mixer \
-    sdl2_ttf \
-    sdl2_gfx
+pkg install -y nodejs
 ```
 
-**验证安装**：
+验证：
 ```bash
-pkg list-installed | grep sdl2
-```
-
-应看到以上所有包标记为 `installed`。
-
-### 2.4 安装其他运行时依赖
-
-```bash
-pkg install -y \
-    libiconv \
-    zlib
-```
-
-### 2.5 可选：性能优化工具
-
-```bash
-# CPU 频率调节（需要 root）
-# pkg install cpufrequtils
-
-# 性能监控
-pkg install -y htop
+node --version  # 应显示 v22.x 或更高
+npm --version
 ```
 
 ---
 
-## 📥 源码获取
+## 🚀 运行安装脚本
 
-### 3.1 克隆 OpenClaw 仓库
+### 4.1 克隆或准备项目
 
-```bash
-# 创建工作目录
-mkdir -p ~/openclaw-build
-cd ~/openclaw-build
-
-# 克隆官方仓库（最新 master 分支）
-git clone --depth 1 https://github.com/OpenClaw/OpenClaw.git src
-
-# 进入源码目录
-cd src
-
-# 查看分支信息
-git branch -a
-```
-
-### 3.2 指定特定版本（可选）
-
-如需稳定版本，检出对应 tag：
+如果你还没有本项目：
 
 ```bash
-# 查看可用标签
-git tag -l
-
-# 切换至 v1.2.0 版本（示例）
-git checkout tags/v1.2.0
+# 在 Termux 中克隆
+git clone https://github.com/yourusername/termux-install-openclaw.git
+cd termux-install-openclaw
 ```
 
-### 3.3 应用 Android 补丁（如有）
-
-如果项目包含针对 Termux/Android 的补丁：
+### 4.2 赋予执行权限
 
 ```bash
-# 进入项目根目录
-cd ~/openclaw-build/src
-
-# 应用补丁
-for patch in ../patches/*.patch; do
-    echo "应用补丁: $patch"
-    git apply "$patch" || true
-done
+chmod +x scripts/*.sh
+chmod +x install.sh
 ```
 
----
-
-## 🔨 构建过程
-
-### 4.1 创建构建目录
+### 4.3 执行安装
 
 ```bash
-cd ~/openclaw-build
-mkdir -p build
-cd build
+./install.sh
 ```
 
-### 4.2 配置 CMake
+安装脚本会：
+1. ✅ 检查并安装 Node.js（如果不足 v22）
+2. ✅ 安装 pnpm 包管理器
+3. ✅ 克隆 OpenClaw-CN 源码到 `openclaw/` 目录
+4. ✅ 运行 `pnpm install` 安装依赖
+5. ✅ 运行 `pnpm build` 和 `pnpm ui:build` 构建项目
+6. ✅ 创建配置文件 `~/.openclaw/openclaw.json`
+7. ✅ 创建必要的数据目录
+
+### 4.4 验证构建
 
 ```bash
-cmake \
-    -DCMAKE_INSTALL_PREFIX="$PREFIX" \
-    -DCMAKE_BUILD_TYPE=Release \
-    ../src
+cd openclaw
+ls -lh dist/index.js
 ```
 
-**参数说明**：
-- `CMAKE_INSTALL_PREFIX`: 安装目标目录，Termux 标准位置为 `$PREFIX`
-- `CMAKE_BUILD_TYPE`: 构建类型，`Release` 为优化版本（推荐），`Debug` 用于调试
-
-**常见配置选项**：
-```bash
-# 启用/禁用组件
--DENABLE_EDITOR=ON      # 构建关卡编辑器（可能需要额外依赖）
--DENABLE_TESTS=OFF      # 不构建测试套件
-
-# 指定资源路径（如果资源文件在外部）
--DRESOURCE_DIR="$PREFIX/share/openclaw"
-```
-
-### 4.3 编译源码
-
-```bash
-# 自动检测 CPU 核心数并行编译
-cmake --build . -- -j$(nproc)
-
-# 或手动指定并行数（例如 4 个任务）
-cmake --build . -- -j4
-```
-
-**编译日志**：
-- 正常输出：`[ 50%] Building CXX object ...`
-- 错误：`error: ...`（停止并显示问题）
-
-### 4.4 编译时长参考
-
-| 设备 CPU | 核心数 | 预估时长 |
-|----------|--------|----------|
-| 骁龙 855 | 8 | ~15 分钟 |
-| 骁龙 765G | 8 | ~25 分钟 |
-| 骁龙 480 | 8 | ~35 分钟 |
-| 中低端 Cortex-A53 | 4-8 | ~60 分钟 |
-
----
-
-## 📦 安装配置
-
-### 5.1 安装到系统目录
-
-```bash
-cmake --install .
-```
-
-这将复制：
-- 可执行文件 → `$PREFIX/bin/openclaw`
-- 共享资源（图像、音效、关卡） → `$PREFIX/share/openclaw/`
-- 默认配置 → `$PREFIX/etc/openclaw/`
-
-### 5.2 创建用户配置目录
-
-```bash
-mkdir -p "$HOME/.openclaw"
-```
-
-首次运行会自动生成配置文件。
-
-### 5.3 验证安装
-
-```bash
-# 检查可执行文件
-ls -lh "$PREFIX/bin/openclaw"
-
-# 测试运行（显示版本信息）
-openclaw --version
-
-# 如果提示 command not found，确保 PATH 包含 $PREFIX/bin
-echo 'export PATH="$HOME/.local/bin:$PREFIX/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-```
-
-### 5.4 服务管理
-
-安装完成后，可以使用服务脚本以后台方式运行 OpenClaw，适用于需要长时间运行或作为服务的场景：
-
-```bash
-# 启动服务（后台运行，日志输出到 ~/.openclaw/service.log）
-$PREFIX/share/openclaw/scripts/start-service.sh
-
-# 停止服务
-$PREFIX/share/openclaw/scripts/stop-service.sh
-
-# 检查依赖和环境状态
-$PREFIX/share/openclaw/scripts/check-deps.sh
-```
-
-这些脚本也保留在项目根目录的 `scripts/` 文件夹中，可直接使用。
+应看到编译后的 JavaScript 文件。
 
 ---
 
 ## ⚙️ 配置说明
 
-### 6.1 配置文件结构
+### 5.1 编辑配置文件
 
-```
-~/.openclaw/
-├── config.ini      # 主配置文件
-├── controls.ini    # 控制映射（可选）
-└── saves/          # 游戏存档目录
-```
-
-### 6.2 默认配置项
-
-编辑 `~/.openclaw/config.ini`：
-
-```ini
-[graphics]
-# 分辨率设置
-width=1280
-height=720
-fullscreen=false
-vsync=true
-
-# 纹理质量 (low/medium/high)
-texture_quality=high
-
-[audio]
-enabled=true
-music_volume=80
-sfx_volume=100
-
-[controls]
-# 输入设备启用
-touch_enabled=true
-keyboard_enabled=true
-gamepad_enabled=true
-
-[performance]
-# 最大帧率（0 表示不限制）
-max_fps=60
-
-# 渲染驱动 (auto/opengles/software)
-render_driver=auto
-```
-
-### 6.3 控制映射（controls.ini）
-
-```ini
-[keyboard]
-# 格式: action=key
-move_left=LEFT
-move_right=RIGHT
-jump=SPACE
-attack=LCONTROL
-
-[touch]
-# 触摸屏按钮位置（百分比）
-jump_button_x=50
-jump_button_y=80
-attack_button_x=80
-attack_button_y=80
-```
-
----
-
-## 🚀 后续优化
-
-### 7.1 性能调优
-
-1. **降低分辨率**
-   ```ini
-   width=800
-   height=480
-   ```
-
-2. **使用软件渲染（无 GPU 加速设备）**
-   ```bash
-   export SDL_RENDER_DRIVER=software
-   openclaw
-   ```
-
-3. **限制帧率以省电**
-   ```ini
-   max_fps=30
-   ```
-
-### 7.2 资源包
-
-原始游戏资源（图片、音效、关卡数据）需另外获取。将资源文件复制到 `$PREFIX/share/openclaw/`：
+安装完成后，编辑 `~/.openclaw/openclaw.json`：
 
 ```bash
-# 示例：复制资源包
-cp -r /sdcard/OpenClaw-Resources/* "$PREFIX/share/openclaw/"
+nano ~/.openclaw/openclaw.json
 ```
 
-### 7.3 创建快捷方式
+**关键配置项**：
+
+```json
+{
+  "agent": {
+    "model": "anthropic/claude-sonnet-4-5",      // AI 模型
+    "apiKey": "sk-...",                          // 你的 API Key
+    "baseUrl": "https://api.openai.com"         // API 端点
+  },
+  "gateway": {
+    "port": 18789,                               // 网关端口
+    "token": "随机生成的安全令牌",                // 访问令牌
+    "bind": "lan"                               // 绑定地址
+  },
+  "plugins": {
+    "feishu": { "enabled": false },             // 飞书配置
+    "telegram": { "enabled": false }            // Telegram 配置
+  }
+}
+```
+
+详细配置参考：[官方配置文档](https://clawd.org.cn/docs)
+
+### 5.2 Docker 配置（可选）
+
+如果你更喜欢 Docker 部署，可以使用项目中的 `docker-compose.yml` 示例：
 
 ```bash
-# 添加到主屏幕（Termux:Widget）
-echo "#!/data/data/com.termux/files/usr/bin/bash" > ~/.shortcuts/openclaw.sh
-echo "openclaw" >> ~/.shortcuts/openclaw.sh
-chmod +x ~/.shortcuts/openclaw.sh
+# 在 openclaw-cn-termux 根目录
+docker-compose up -d
 ```
 
 ---
 
-## 💻 命令行参考
+## 🎯 启动服务
 
-| 命令 | 说明 |
-|------|------|
-| `openclaw` | 启动游戏 |
-| `openclaw --version` | 显示版本信息 |
-| `openclaw --fullscreen` | 全屏启动 |
-| `openclaw --res=800x480` | 指定分辨率启动 |
-| `OPENCLAW_DEBUG=1 openclaw` | 调试模式（输出日志） |
-
-### 环境变量
-
-| 变量 | 说明 | 示例 |
-|------|------|------|
-| `OPENCLAW_CONFIG` | 指定配置文件路径 | `export OPENCLAW_CONFIG=~/myconfig.ini` |
-| `SDL_RENDER_DRIVER` | 强制渲染驱动 | `export SDL_RENDER_DRIVER=software` |
-| `OPENCLAW_DEBUG` | 启用调试日志 | `export OPENCLAW_DEBUG=1` |
-
----
-
-## 📚 附录
-
-### A. 编译错误排查
-
-| 错误信息 | 可能原因 | 解决方案 |
-|----------|----------|----------|
-| `SDL.h: No such file` | SDL2 开发包未安装 | `pkg install sdl2` |
-| `CMake Error` | CMake 版本过低 | `pkg install cmake` |
-| `permission denied` | 缺少执行权限 | `chmod +x script.sh` |
-
-### B. 运行问题排查
-
-| 问题 | 可能原因 | 解决方案 |
-|------|----------|----------|
-| 黑屏/闪退 | GPU 驱动问题 | 使用 `SDL_RENDER_DRIVER=software` |
-| 无声音 | SDL2_mixer 缺失 | `pkg install sdl2_mixer` |
-| 触摸无效 | 输入配置错误 | 检查 `controls.ini` |
-
-### C. 卸载
+### 6.1 使用服务脚本（推荐）
 
 ```bash
-# 删除二进制文件
-rm -f "$PREFIX/bin/openclaw"
+# 启动 Gateway 服务（后台运行）
+./scripts/start-gateway.sh
 
-# 删除系统配置
-rm -rf "$PREFIX/etc/openclaw"
+# 查看日志
+tail -f ~/.openclaw/gateway.log
 
-# 删除用户数据（存档）
-rm -rf "$HOME/.openclaw"
+# 停止服务
+./scripts/stop-gateway.sh
+```
+
+### 6.2 直接使用 pnpm
+
+```bash
+cd openclaw
+
+# 启动 Gateway（Web 控制台）
+pnpm start:gateway
+
+# 或启动 CLI 交互模式
+pnpm start
+
+# 生产模式
+pnpm start:prod
+```
+
+### 6.3 验证运行
+
+```bash
+# 检查进程
+ps aux | grep openclaw
+
+# 测试健康检查
+curl http://localhost:18789/health
+
+# 打开控制界面（Termux 内部或局域网）
+# Termux 内部: http://localhost:1880
+# 局域网访问: http://<你的设备IP>:1880
 ```
 
 ---
 
-**如有问题，请参考 [troubleshooting.md](./troubleshooting.md) 或 [FAQ](./faq.md)**
+## 🔧 后续管理
 
-返回 [README](../README.md) 主页
+### 7.1 更新 OpenClaw
+
+```bash
+cd openclaw
+pnpm update
+pnpm build
+pnpm ui:build
+```
+
+### 7.2 查看日志
+
+```bash
+# Gateway 日志（如果使用服务脚本）
+tail -f ~/.openclaw/gateway.log
+
+# 应用日志
+tail -f ~/.openclaw/logs/*.log
+```
+
+### 7.3 卸载
+
+```bash
+# 停止服务
+./scripts/stop-gateway.sh
+
+# 删除安装目录
+rm -rf openclaw
+
+# 删除配置和数据（谨慎！）
+rm -rf ~/.openclaw
+```
+
+---
+
+## 🐛 故障排查
+
+### Node.js 版本过低
+
+```bash
+pkg install -y nodejs
+# 或
+pkg upgrade nodejs
+```
+
+### pnpm 命令找不到
+
+```bash
+npm install -g pnpm
+# 或
+corepack enable && corepack prepare pnpm@latest --activate
+```
+
+### 端口被占用
+
+编辑 `~/.openclaw/openclaw.json`，修改 `gateway.port` 为其他端口（如 18790）。
+
+### 构建失败
+
+清理后重试：
+```bash
+cd openclaw
+rm -rf node_modules dist .pnpm-store
+pnpm install
+pnpm build
+```
+
+### 无法访问 Web UI
+
+确保网关正在运行：
+```bash
+./scripts/start-gateway.sh
+```
+
+并检查防火墙：Termux 允许局域网访问（gateway.bind 配置）。
+
+### 插件无法启用
+
+检查插件配置是否正确，并确保已安装对应依赖：
+```bash
+cd openclaw
+pnpm install --filter @larksuiteoapi/feishu-openclaw-plugin
+```
+
+---
+
+## 📚 参考资源
+
+- 官方网站: https://clawd.org.cn
+- 中文文档: https://clawd.org.cn/docs
+- GitHub: https://github.com/jiulingyun/openclaw-cn
+- 上游项目: https://github.com/openclaw/openclaw
+- 社区交流: https://discord.gg/clawd

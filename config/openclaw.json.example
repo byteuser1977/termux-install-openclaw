@@ -1,0 +1,46 @@
+{
+  "$schema": "https://clawd.org.cn/schema/openclaw-config.json",
+  "version": 1,
+  "agent": {
+    "model": "anthropic/claude-sonnet-4-5",
+    "provider": "openai-compatible",
+    "apiKey": "${OPENCLAW_API_KEY}",
+    "baseUrl": "https://api.openai.com"
+  },
+  "gateway": {
+    "port": 18789,
+    "token": "${OPENCLAW_GATEWAY_TOKEN:-}",
+    "bind": "lan",
+    "logLevel": "info"
+  },
+  "daemon": {
+    "enabled": false,
+    "autostart": false
+  },
+  "ui": {
+    "enabled": true,
+    "port": 1880
+  },
+  "plugins": {
+    "feishu": {
+      "enabled": false,
+      "appId": "",
+      "appSecret": "",
+      "encryptionKey": ""
+    },
+    "telegram": {
+      "enabled": false,
+      "botToken": ""
+    },
+    "whatsapp": {
+      "enabled": false,
+      "pairingCode": ""
+    }
+  },
+  "storage": {
+    "dataDir": "${HOME}/.openclaw/data",
+    "memoryDir": "${HOME}/.openclaw/memory",
+    "logsDir": "${HOME}/.openclaw/logs"
+  },
+  "locale": "zh-CN"
+}

@@ -1,11 +1,11 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# OpenClaw 服务停止脚本
+# OpenClaw Gateway 停止脚本
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PID_FILE="$HOME/.openclaw/openclaw.pid"
-LOG_FILE="$HOME/.openclaw/service.log"
+PID_FILE="$HOME/.openclaw/gateway.pid"
+LOG_FILE="$HOME/.openclaw/gateway.log"
 
 # 颜色
 RED='\033[0;31m'
@@ -33,7 +33,7 @@ PID=$(cat "$PID_FILE")
 
 # 检查进程是否存在
 if kill -0 "$PID" 2>/dev/null; then
-    log_info "正在停止 OpenClaw (PID: $PID)..."
+    log_info "正在停止 OpenClaw Gateway (PID: $PID)..."
     kill "$PID"
 
     # 等待进程退出（最多 10 秒）
@@ -54,7 +54,7 @@ if kill -0 "$PID" 2>/dev/null; then
     # 清理 PID 文件
     rm -f "$PID_FILE"
 
-    log_ok "OpenClaw 已停止"
+    log_ok "OpenClaw Gateway 已停止"
 else
     log_warn "进程 $PID 不存在，清理 PID 文件..."
     rm -f "$PID_FILE"
