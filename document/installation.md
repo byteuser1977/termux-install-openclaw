@@ -562,3 +562,26 @@ tar -xzf ~/openclaw-backup-*.tar.gz -C ~/
 ---
 
 **閬囧埌闂锛?* 鏌ョ湅 [troubleshooting.md](./troubleshooting.md) 鎴栨彁浜?[GitHub Issue](https://github.com/jiulingyun/openclaw-cn/issues)銆?
+
+## ?? 使用便捷脚本（可选）
+
+本项目提供了两个便捷脚本，可以简化安装流程：
+
+### 使用 install-ubuntu.sh
+
+在 Termux 中运行：
+`ash
+./scripts/install-ubuntu.sh
+` 
+该脚本会自动完成 Termux 环境配置和 Ubuntu 安装。
+
+### 使用 install-openclaw.sh
+
+在 Ubuntu 中运行（openclaw 用户）：
+`ash
+./scripts/install-openclaw.sh
+` 
+该脚本会自动安装 Node.js、pnpm 和 OpenClaw-CN。
+
+详细说明请参考各脚本内部的帮助信息。
+

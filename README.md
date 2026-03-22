@@ -36,9 +36,9 @@ apt update && apt upgrade -y
 apt install proot-distro -y
 termux-setup-storage
 
-# 2️⃣ 安装 Ubuntu 22.04
-proot-distro install ubuntu-22.04
-proot-distro login ubuntu-22.04
+# 2️⃣ 安装 Ubuntu
+proot-distro install ubuntu
+proot-distro login ubuntu
 
 # 3️⃣ 在 Ubuntu 中安装软件
 apt update && apt upgrade -y
@@ -91,7 +91,11 @@ openclaw-cn-termux gateway  # 启动网关
 termux-install-openclaw/
 ├── install.sh              # 可选：快速环境检查脚本
 ├── scripts/
-│   └── install.sh         # 辅助安装脚本（非必需）
+│   ├── install-ubuntu.sh   # 一键安装 Ubuntu（在 Termux 中运行）
+│   ├── install-openclaw.sh # 一键安装 OpenClaw（在 Ubuntu 中运行）
+│   ├── start-gateway.sh    # 启动 Gateway 服务
+│   ├── stop-gateway.sh     # 停止服务
+│   └── check-env.sh        # 环境诊断工具
 ├── config/
 │   └── openclaw.json.example  # OpenClaw 配置模板
 ├── document/
@@ -110,7 +114,7 @@ termux-install-openclaw/
 |------|------|
 | **[installation.md](document/installation.md)** | ⭐ **完整安装流程**（10 章，从 Termux 到运行） |
 | **[faq.md](document/faq.md)** | 常见问题（24+ Q&A，覆盖安装、配置、插件、性能） |
-| **[troubleshooting.md](document/troubleshooting.md)** | 故障排查（网络、权限、端口、内存等问题） |
+| **[troubleshooting.md](document/troubleshooting.md)** | 故障排查（网络、权限、端口、内存等） |
 
 **请务必先阅读 [installation.md](document/installation.md) 再开始安装！**
 
@@ -130,71 +134,138 @@ termux-install-openclaw/
 
 ---
 
-## ⚙️ 安装流程概览
+## 🎯 完整工作流程
 
-### 阶段 1: Termux 基础配置
+### 阶段 1: Termux → Ubuntu
 
 ```bash
+# 在 Termux 中执行
 apt update && apt upgrade -y
-apt install termux-services termux-tools termux-api proot-distro -y
+apt install proot-distro -y
 termux-setup-storage
+
+# 运行一键脚本（推荐）
+./scripts/install-ubuntu.sh
+
+# 或手动执行
+proot-distro install ubuntu
+proot-distro login ubuntu
 ```
 
-### 阶段 2: 安装 Ubuntu
+### 阶段 2: Ubuntu 环境配置
 
 ```bash
-proot-distro install ubuntu-22.04  # 或 ubuntu-24.04
-proot-distro login ubuntu-22.04
+# 在 Ubuntu 中执行
 apt update && apt upgrade -y
 apt install sudo ssh nginx curl wget git build-essential python3-pip -y
-```
 
-### 阶段 3: 创建用户并安装 Node.js
-
-```bash
+# 创建 openclaw 用户
 adduser openclaw
+usermod -aG sudo openclaw
+
+# 切换到 openclaw 用户
 su - openclaw
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh \| bash
-\. "$HOME/.nvm/nvm.sh"
-nvm install --lts  # Node.js 24
-nvm alias default 24
 ```
 
-### 阶段 4: 安装 OpenClaw-CN
+### 阶段 3: Node.js 安装
 
 ```bash
+# 使用 nvm（推荐）
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+\. "$HOME/.nvm/nvm.sh"
+nvm install --lts
+nvm alias default 24
+
+# 验证
+node --version  # v24.x
+npm --version
+```
+
+### 阶段 4: OpenClaw-CN 安装
+
+```bash
+# 使用便捷脚本（推荐）
+./scripts/install-openclaw.sh
+
+# 或手动安装
+npm config set registry https://registry.npmmirror.com  # 国内镜像
 npm install -g openclaw-cn-termux@latest
-# 或使用 pnpm 加速
-npm install -g pnpm
+# 或
 pnpm add -g openclaw-cn-termux@latest
 ```
 
 ### 阶段 5: 配置与启动
 
 ```bash
-openclaw-cn-termux onboard  # 交互配置
-openclaw-cn-termux gateway  # 启动
-# 访问 http://localhost:1880
+# 交互式配置（首次）
+openclaw-cn-termux onboard
+
+# 或手动编辑配置文件
+nano ~/.openclaw/openclaw.json
+
+# 最小配置
+{
+  "agent": {
+    "model": "anthropic/claude-sonnet-4-5",
+    "apiKey": "sk-your-api-key"
+  },
+  "gateway": {
+    "port": 18789,
+    "token": "random-token",
+    "bind": "lan"
+  }
+}
+
+# 启动网关
+openclaw-cn-termux gateway
+
+# 后台运行
+nohup openclaw-cn-termux gateway > ~/.openclaw/gateway.log 2>&1 &
+```
+
+### 阶段 6: 访问 Web UI
+
+打开浏览器访问：
+- **Termux 内部**: http://localhost:1880
+- **局域网其他设备**: http://<设备IP>:1880
+
+查看设备 IP：
+```bash
+hostname -I
 ```
 
 ---
 
-## 🎯 验证安装
+## ⚙️ 配置文件
 
-```bash
-# 查看 OpenClaw 版本
-openclaw-cn-termux --version
+### 位置
 
-# 检查进程
-ps aux \| grep openclaw
+- **用户配置**: `~/.openclaw/openclaw.json`
+- **配置模板**: `termux-install-openclaw/config/openclaw.json.example`
 
-# 测试网关健康检查
-curl http://localhost:18789/health
-# 应返回: {"status":"ok"}
+### 最小配置示例
 
-# 访问 Web UI
-# 浏览器打开: http://localhost:1880
+```json
+{
+  "$schema": "https://clawd.org.cn/schema/openclaw-config.json",
+  "version": 1,
+  "agent": {
+    "model": "anthropic/claude-sonnet-4-5",
+    "apiKey": "sk-your-api-key-here"
+  },
+  "gateway": {
+    "port": 18789,
+    "token": "random-generated-token",
+    "bind": "lan"
+  },
+  "locale": "zh-CN"
+}
 ```
+
+**必填项**:
+- `agent.apiKey` - AI 模型的 API Key
+- `agent.model` - 使用的模型名称
+- `gateway.token` - 访问令牌
 
 ---
 
@@ -229,36 +300,50 @@ tail -f ~/.openclaw/gateway.log
 
 ---
 
-## ⚙️ 配置文件
+## 📦 更新与维护
 
-### 位置
+### 更新 OpenClaw
 
-- **用户配置**: `~/.openclaw/openclaw.json`
-- **配置模板**: `termux-install-openclaw/config/openclaw.json.example`
-
-### 最小配置示例
-
-```json
-{
-  "$schema": "https://clawd.org.cn/schema/openclaw-config.json",
-  "version": 1,
-  "agent": {
-    "model": "anthropic/claude-sonnet-4-5",
-    "apiKey": "sk-your-api-key-here"
-  },
-  "gateway": {
-    "port": 18789,
-    "token": "random-generated-token",
-    "bind": "lan"
-  },
-  "locale": "zh-CN"
-}
+```bash
+pnpm update -g openclaw-cn-termux
+# 或
+npm update -g openclaw-cn-termux
 ```
 
-**必填项**:
-- `agent.apiKey` - AI 模型的 API Key
-- `agent.model` - 使用的模型名称
-- `gateway.token` - 访问令牌
+### 备份配置
+
+```bash
+tar -czf ~/openclaw-backup-$(date +%Y%m%d).tar.gz ~/.openclaw/
+```
+
+---
+
+## 🐛 常见问题
+
+### 安装失败怎么办？
+
+```bash
+# 清理后重试（Ubuntu 中）
+cd ~
+rm -rf node_modules .pnpm-store
+pnpm install -g openclaw-cn-termux@latest
+```
+
+### 无法访问 Web UI？
+
+- 确认 Gateway 已启动：`ps aux | grep openclaw`
+- 检查端口是否被占用：`lsof -i :1880`
+- 确保配置中 `"bind": "lan"` 或 `"0.0.0.0"`
+
+### 插件无法使用？
+
+确认依赖已安装：
+```bash
+pnpm install --filter @larksuiteoapi/feishu-openclaw-plugin
+```
+
+更多 Q&A 见 [faq.md](document/faq.md)  
+详细故障排查见 [troubleshooting.md](document/troubleshooting.md)
 
 ---
 
