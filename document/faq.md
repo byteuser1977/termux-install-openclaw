@@ -29,7 +29,7 @@ https://github.com/termux/termux-app/releases
 
 ```bash
 export PROOT_DISTRO_MIRROR="https://mirrors.tuna.tsinghua.edu.cn/termux/proot-distro"
-proot-distro install ubuntu-22.04
+proot-distro install ubuntu
 ```
 
 也可以将 `export PROOT_DISTRO_MIRROR="..."` 加入 `~/.bashrc` 永久生效。
@@ -41,7 +41,7 @@ proot-distro install ubuntu-22.04
 ```bash
 export http_proxy="http://your-proxy:port"
 export https_proxy="http://your-proxy:port"
-proot-distro install ubuntu-22.04
+proot-distro install ubuntu
 ```
 
 **方法3: 手动下载并安装**
@@ -49,24 +49,15 @@ proot-distro install ubuntu-22.04
 ```bash
 # 手动下载 rootfs.tar.gz 到 Termux
 cd ~
-wget https://mirrors.tuna.tsinghua.edu.cn/termux/proot-distro/ubuntu-22.04/rootfs.tar.gz
+wget https://mirrors.tuna.tsinghua.edu.cn/termux/proot-distro/ubuntu/rootfs.tar.gz
 
 # 安装（会使用本地文件）
-proot-distro install ubuntu-22.04
+proot-distro install ubuntu
 ```
 
 ---
 
-### Q4: 如何选择 Ubuntu 版本？
-
-- **Ubuntu 22.04 (jammy)**: 长期支持版，稳定性好，兼容性最佳
-- **Ubuntu 24.04 (noble)**: 较新，软件版本更新，但可能存在未知问题
-
-**推荐**: 新手使用 22.04，追求新特性可试用 24.04。
-
----
-
-### Q5: nvm 安装失败怎么办？
+### Q4: nvm 安装失败怎么办？
 
 确保网络通畅，可以尝试：
 ```bash

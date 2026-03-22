@@ -31,7 +31,7 @@ apt install termux-tools -y
 
 ```bash
 export PROOT_DISTRO_MIRROR="https://mirrors.tuna.tsinghua.edu.cn/termux/proot-distro"
-proot-distro install ubuntu-22.04
+proot-distro install ubuntu
 ```
 
 可以将 `export PROOT_DISTRO_MIRROR="..."` 加入 `~/.bashrc` 永久生效。
@@ -41,17 +41,17 @@ proot-distro install ubuntu-22.04
 ```bash
 # 手动下载 rootfs.tar.gz
 cd ~
-wget https://mirrors.tuna.tsinghua.edu.cn/termux/proot-distro/ubuntu-22.04/rootfs.tar.gz
+wget https://mirrors.tuna.tsinghua.edu.cn/termux/proot-distro/ubuntu/rootfs.tar.gz
 
 # 安装（使用本地文件）
-proot-distro install ubuntu-22.04
+proot-distro install ubuntu
 ```
 
 ---
 
 ### ❌ Ubuntu 启动失败（ denying permission to /dev/...）
 
-**症状**: `proot-distro login ubuntu-22.04` 时报权限错误  
+**症状**: `proot-distro login ubuntu` 时报权限错误  
 **原因**: Termux 存储权限未正确授权  
 **解决**:
 ```bash
@@ -73,7 +73,7 @@ ls -la ~/storage
 **解决**:
 ```bash
 # 进入 Ubuntu
-proot-distro login ubuntu-22.04
+proot-distro login ubuntu
 
 # 备份并重置 sources.list
 cp /etc/apt/sources.list /etc/apt/sources.list.bak
@@ -396,7 +396,7 @@ rm -rf ~/.openclaw
 
 # 4. 删除 Ubuntu 容器（可选）
 # 在 Termux 中
-proot-distro remove ubuntu-22.04
+proot-distro remove ubuntu
 ```
 
 ---
