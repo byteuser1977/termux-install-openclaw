@@ -17,6 +17,7 @@ OPENCLAW_BRANCH="${OPENCLAW_BRANCH:-master}"
 INSTALL_PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
 BUILD_DIR="${OPENCLAWDIR:-${PWD}/build}"
 SOURCE_DIR="${OPENCLAWDIR:-${PWD}/src}"
+PROJECT_DIR="${PWD}"
 CONFIG_DIR="${PWD}/config"
 DOCUMENT_DIR="${PWD}/document"
 RELEASE_DIR="${PWD}/release"
@@ -167,6 +168,13 @@ install_openclaw() {
     cd "$BUILD_DIR"
     cmake --install .
 
+    # 安装 Termux 特定脚本
+    log_info "安装 Termux 服务脚本..."
+    local scripts_install_dir="$INSTALL_PREFIX/share/openclaw/scripts"
+    mkdir -p "$scripts_install_dir"
+    cp -r "$SCRIPT_DIR/." "$scripts_install_dir/"
+    chmod +x "$scripts_install_dir"/*.sh
+
     # 创建用户配置目录
     mkdir -p "$HOME/.openclaw"
 
@@ -198,7 +206,7 @@ show_completion() {
 
 ${GREEN}╔══════════════════════════════════════════════╗${NC}
 ${GREEN}║   OpenClaw 安装成功！                     ║${NC}
-${GREEN}╚══════════════════════════════════════════════╝${NC}
+${GREEN}╚═══════════════════════════════════════════╝${NC}
 
 使用方法：
   ${BLUE}$INSTALL_PREFIX/bin/openclaw${NC}
@@ -208,6 +216,14 @@ ${GREEN}╚═══════════════════════
 配置文件：
   系统: $INSTALL_PREFIX/etc/openclaw/config.ini
   用户: $HOME/.openclaw/config.ini
+
+服务脚本（后台运行）：
+  启动: $INSTALL_PREFIX/share/openclaw/scripts/start-service.sh
+  停止: $INSTALL_PREFIX/share/openclaw/scripts/stop-service.sh
+  检查: $INSTALL_PREFIX/share/openclaw/scripts/check-deps.sh
+
+  或直接运行（脚本会在安装目录）：
+  ${BLUE}$PROJECT_DIR/scripts/start-service.sh${NC}
 
 文档：
   安装手册: ${DOCUMENT_DIR}/installation.md
