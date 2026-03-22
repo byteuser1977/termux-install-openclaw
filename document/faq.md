@@ -1,26 +1,133 @@
 # Termux OpenClaw 常见问题
 
-## 📱 安装与配置
+## 📦 安装与配置
 
-### Q1: 安装脚本提示"Node.js 版本过低"怎么办？
+### Q1: 为什么需要 proot-distro 和 Ubuntu？
 
-Termux 默认仓库的 Node.js 可能不是最新版。运行：
+OpenClaw-CN 是为标准 Linux 环境设计的，依赖许多 Linux 工具和库。Termux 本身是 Android 上的 Linux 用户空间，但某些库可能缺失或版本不符。通过 proot-distro 运行完整的 Ubuntu 系统可以保证与服务器部署环境的完全一致，避免兼容性问题。
+
+**简言之**: 这是最稳定、最接近生产环境的安装方式。
+
+---
+
+### Q2: Termux 从哪里下载？
+
+从 **F-Droid** 下载最新版：
+https://github.com/termux/termux-app/releases
+
+不要使用 Google Play 的旧版本。
+
+---
+
+### Q3: proot-distro 安装 Ubuntu 很慢怎么办？
+
+首次安装需要下载约 200-300 MB 的 rootfs 镜像。可以更换为国内镜像源加速：
 
 ```bash
-pkg update -y
-pkg upgrade -y nodejs
+# 在 Termux 中执行前，编辑或创建
+mkdir -p ~/.proot-distro
+cat > ~/.proodistrotostatic/ etc/apt/sources.list <<'EOF'
+# 清华大学镜像
+deb http://mirrors.tuna.tsinghua.edu.cn/termux/proot-distro/ubuntu-22.04 jammy main
+# 或使用官方源
+# deb http://termux.net/proot-distro/ubuntu-22.04 jammy main
+EOF
 ```
 
-或手动安装最新：
+或在 `proot-distro install` 时指定镜像。
+
+---
+
+### Q4: 如何选择 Ubuntu 版本？
+
+- **Ubuntu 22.04 (jammy)**: 长期支持版，稳定性好，兼容性最佳
+- **Ubuntu 24.04 (noble)**: 较新，软件版本更新，但可能存在未知问题
+
+**推荐**: 新手使用 22.04，追求新特性可试用 24.04。
+
+---
+
+### Q5: nvm 安装失败怎么办？
+
+确保网络通畅，可以尝试：
 ```bash
-pkg install -y nodejs
+# 使用国内镜像安装 nvm
+export NVM_URL="https://gitee.com/mirrors/nvm"
+curl -o- https://gitee.com/mirrors/nvm/raw/v0.40.3/install.sh | bash
 ```
 
-### Q2: 如何配置 API Key？
+或手动下载脚本：
+```bash
+wget https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh
+bash install.sh
+```
 
-编辑 `~/.openclaw/openclaw.json`，在 `agent.apiKey` 字段填入你的 AI 模型 API Key（如 OpenAI、Claude 等）。
+---
 
-示例：
+### Q6: Node.js 安装哪个版本？
+
+OpenClaw-CN 需要 **Node.js ≥ 22**。推荐使用 **Node.js 24**（当前 LTS）。
+
+```bash
+nvm install --lts   # 安装最新 LTS
+nvm alias default 24
+```
+
+---
+
+### Q7: npm 全局安装很慢/失败？
+
+使用淘宝镜像：
+```bash
+npm config set registry https://registry.npmmirror.com
+```
+
+或使用 pnpm（更快）：
+```bash
+npm install -g pnpm
+pnpm config set registry https://registry.npmmirror.com
+pnpm add -g openclaw-cn-termux@latest
+```
+
+---
+
+### Q8: 命令行找不到 `openclaw-cn-termux`？
+
+检查 npm 全局 bin 目录是否在 PATH 中：
+
+```bash
+# 查看 npm 全局安装位置
+npm config get prefix
+# 通常是 /home/openclaw/.npm-global 或 /usr/local
+
+# 查看 bin 目录
+npm bin -g
+
+# 添加到 PATH（编辑 ~/.bashrc）
+echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.bashrc
+# 或如果使用 /usr/local:
+# echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc
+
+source ~/.bashrc
+
+# 重新检查
+which openclaw-cn-termux || which openclaw-termux
+```
+
+---
+
+### Q9: 配置文件在哪里？
+
+- **位置**: `~/.openclaw/openclaw.json`
+- **首次创建**: 运行 `openclaw-cn-termux onboard` 交互式向导
+- **手动创建**: 复制 `config/openclaw.json.example` 并编辑
+
+---
+
+### Q10: 如何配置 API Key？
+
+编辑 `~/.openclaw/openclaw.json`：
+
 ```json
 {
   "agent": {
@@ -30,205 +137,259 @@ pkg install -y nodejs
 }
 ```
 
-### Q3: 支持哪些 AI 模型？
-
-OpenClaw 支持 OpenAI 兼容接口：
-- GPT-4o, GPT-4-turbo
-- Claude 系列（通过 OpenAI 兼容端点）
-- 其他兼容 OpenAI 格式的模型
-
-### Q4: 配置文件在哪里？
-
-- 系统示例: `termux-install-openclaw/config/openclaw.json.example`
-- 用户配置: `~/.openclaw/openclaw.json`
-- 这是唯一需要手动编辑的配置文件
+支持的模型：
+- OpenAI: `gpt-4o`, `gpt-4-turbo`, `gpt-4o-mini`
+- Claude (通过 OpenAI 兼容端点): `anthropic/claude-sonnet-4-5`
+- 其他 OpenAI 兼容接口
 
 ---
 
 ## 🔌 渠道插件
 
-### Q5: 如何使用飞书插件？
+### Q11: 如何使用飞书插件？
 
-1. 确保已安装飞书插件依赖：
-```bash
-cd openclaw
-pnpm install --filter @larksuiteoapi/feishu-openclaw-plugin
-```
+1. **安装插件依赖**（在 Ubuntu 中）：
+   ```bash
+   cd ~
+   pnpm install --filter @larksuiteoapi/feishu-openclaw-plugin
+   ```
 
-2. 在 `openclaw.json` 启用并配置：
-```json
-{
-  "plugins": {
-    "feishu": {
-      "enabled": true,
-      "appId": "your-app-id",
-      "appSecret": "your-app-secret",
-      "encryptionKey": "your-encryption-key"
-    }
-  }
-}
-```
+2. **配置 `openclaw.json`**：
+   ```json
+   {
+     "plugins": {
+       "feishu": {
+         "enabled": true,
+         "appId": "your-app-id",
+         "appSecret": "your-app-secret",
+         "encryptionKey": "your-encryption-key"
+       }
+     }
+   }
+   ```
 
-3. 按照 [飞书官方文档](https://clawd.org.cn/channels/feishu.html) 完成应用配置。
+3. **按照官方文档完成飞书应用配置**：https://clawd.org.cn/channels/feishu.html
 
-### Q6: 如何使用 Telegram Bot？
+---
+
+### Q12: 如何使用 Telegram Bot？
 
 1. 通过 [@BotFather](https://t.me/botfather) 创建 Bot，获取 token
 
-2. 配置 `openclaw.json`：
-```json
-{
-  "plugins": {
-    "telegram": {
-      "enabled": true,
-      "botToken": "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
-    }
-  }
-}
-```
+2. 配置：
+   ```json
+   {
+     "plugins": {
+       "telegram": {
+         "enabled": true,
+         "botToken": "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+       }
+     }
+   }
+   ```
 
-### Q7: 插件安装失败？
+3. 确保插件已安装：
+   ```bash
+   pnpm install --filter @openclaw/telegram-plugin
+   ```
 
-检查网络连接，尝试使用国内镜像：
+---
+
+### Q13: 插件安装失败（Cannot find module）？
+
+确认插件包已安装到 `node_modules`：
 
 ```bash
-pnpm config set registry https://registry.npmmirror.com
+cd ~
+pnpm install --filter <plugin-name>
+# 例如:
+pnpm install --filter @larksuiteoapi/feishu-openclaw-plugin
 ```
+
+如果仍失败，可能是插件未发布到 npm 或需要从源码构建。参考对应插件的 README。
 
 ---
 
 ## 🖥️ 运行问题
 
-### Q8: 启动后无法访问 Web UI？
+### Q14: 启动后无法访问 Web UI？
 
-1. 确认 Gateway 正在运行：
+1. **确认网关正在运行**：
+   ```bash
+   ps aux | grep openclaw
+   # 或
+   curl http://localhost:18789/health
+   ```
+
+2. **检查端口是否被占用**：
+   ```bash
+   lsof -i :18789
+   lsof -i :1880
+   ```
+
+3. **检查配置绑定地址**：
+   ```bash
+   cat ~/.openclaw/openclaw.json | grep -A2 '"gateway"'
+   # 确保 "bind": "lan" 或 "0.0.0.0"
+   ```
+
+4. **查看日志**：
+   ```bash
+   tail -f ~/.openclaw/gateway.log
+   ```
+
+---
+
+### Q15: 如何让服务开机自启动？
+
+在 Ubuntu 中使用 systemd（proot-distro 支持 systemd）：
+
 ```bash
-./scripts/start-gateway.sh
+# 在 Ubuntu 中
+sudo nano /etc/systemd/system/openclaw.service
 ```
 
-2. 查看日志：
-```bash
-tail -f ~/.openclaw/gateway.log
+内容：
+```ini
+[Unit]
+Description=OpenClaw Gateway
+After=network.target
+
+[Service]
+Type=simple
+User=openclaw
+WorkingDirectory=/home/openclaw
+ExecStart=/usr/bin/openclaw-cn-termux gateway
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-3. 检查端口是否被占用：
+然后：
 ```bash
-lsof -i :18789
+sudo systemctl daemon-reload
+sudo systemctl enable openclaw
+sudo systemctl start openclaw
 ```
 
-4. 在 Termux 内部访问：`http://localhost:1880`
-   在局域网其他设备访问：`http://<设备IP>:1880`
+---
 
-### Q9: 如何让后台服务开机自启动？
+### Q16: 日志文件在哪里？
 
-Termux 不支持真正的开机自启，但可以使用 `termux-boot` 插件：
+- **网关日志**: `~/.openclaw/gateway.log`（如果使用 `nohup` 或脚本）
+- **系统日志**: `journalctl -u openclaw`（如果使用 systemd）
+- **应用日志**: `~/.openclaw/logs/`
+- **内存数据**: `~/.openclaw/memory/`
 
-1. 安装 termux-boot：
+---
+
+### Q17: 中文乱码？
+
+确保环境变量设置：
 ```bash
-pkg install termux-boot
+export LANG=zh_CN.UTF-8
+export LC_ALL=zh_CN.UTF-8
 ```
 
-2. 创建启动脚本 `~/.termux/boot/start-openclaw`：
-```bash
-#!/data/data/com.termux/files/usr/bin/bash
-cd /data/data/com.termux/files/home/openclaw
-pnpm start:gateway
-```
-
-3. 赋予权限：
-```bash
-chmod +x ~/.termux/boot/start-openclaw
-```
-
-重启设备后服务会自动启动。
-
-### Q10: 日志文件在哪里？
-
-- Gateway 日志: `~/.openclaw/gateway.log`
-- 应用日志: `~/.openclaw/logs/`
-- 内存数据: `~/.openclaw/memory/`
+Ubuntu 默认已配置 UTF-8，应该没问题。如果仍乱码，检查终端编码设置（Termux 设置 → Terminal → Character encoding 选 UTF-8）。
 
 ---
 
 ## ⚡ 性能与优化
 
-### Q11: 如何降低 CPU/内存占用？
+### Q18: 内存占用过高？
 
-1. 关闭不必要的插件
-2. 调低模型采样参数（如 max_tokens）
-3. 限制并发请求数
-4. 使用更小的模型（如 gpt-4o-mini 替代 gpt-4o）
+OpenClaw 本身内存占用不大（~100-200MB），但如果模型 API 响应慢或配置了大型插件，可能导致累积。
 
-编辑配置：
-```json
-{
-  "agent": {
-    "maxTokens": 1024,
-    "temperature": 0.7
-  }
-}
-```
+**优化建议**：
+1. 限制并发请求数（配置中暂无直接选项，可通过插件配置）
+2. 关闭不需要的插件
+3. 使用更小的 AI 模型（如 `gpt-4o-mini` 替代 `gpt-4o`）
+4. 调整 Node.js 内存限制（如内存确实不足）：
+   ```bash
+   export NODE_OPTIONS="--max-old-space-size=512"
+   ```
 
-### Q12: 移动网络下耗电快？
+---
 
-建议：
-- 使用 `daemon.enabled: false`（按需启动）
-- 降低日志级别：`"gateway": { "logLevel": "warn" }`
-- 禁用不需要的渠道插件
+### Q19: CPU 占用高？
+
+正常运行时 CPU 占用应很低（<5%）。高占用可能原因：
+- 某个插件死循环
+- 频繁的 AI 请求（大量用户同时使用）
+- 日志级别设为 debug（增加 I/O）
+
+**解决**：
+- 检查日志，定位高负载插件
+- 设置 `"gateway.logLevel": "warn"` 减少日志
+- 优化插件逻辑或限制请求频率
 
 ---
 
 ## 🔄 更新与维护
 
-### Q13: 如何更新到最新版本？
+### Q20: 如何更新 OpenClaw？
 
 ```bash
-cd openclaw
-git pull origin main
-pnpm install
-pnpm build
-pnpm ui:build
+cd ~
+pnpm update -g openclaw-cn-termux
+# 或
+npm update -g openclaw-cn-termux
+
+# 如果从源码安装，需要重新构建
+# 但 npm 包已经预构建，直接更新即可
 ```
 
-### Q14: 如何备份数据？
+更新后重启服务。
 
-备份整个配置目录：
-```bash
-tar -czf openclaw-backup-$(date +%Y%m%d).tar.gz ~/.openclaw/
-```
+---
 
-恢复：
+### Q21: 备份数据
+
 ```bash
-tar -xzf openclaw-backup-*.tar.gz -C ~/
+# 备份配置和内存
+tar -czf ~/openclaw-backup-$(date +%Y%m%d).tar.gz ~/.openclaw/
+
+# 恢复
+tar -xzf ~/openclaw-backup-*.tar.gz -C ~/
 ```
 
 ---
 
 ## 🆘 其他问题
 
-### Q15: 安装过程中断怎么办？
+### Q22: Termux 和 Ubuntu 之间如何传输文件？
 
-可以安全地重新运行 `./install.sh`，脚本支持断点续传。
-
-### Q16: 如何查看详细错误日志？
+通过共享存储目录：
+- Termux 共享目录: `~/storage/shared/`
+- Ubuntu 访问: `/mnt/shared/`（自动挂载）
 
 ```bash
-# 查看网关日志
-cat ~/.openclaw/gateway.log
-
-# 启用调试模式（编辑配置文件）
-{
-  "gateway": {
-    "logLevel": "debug"
-  }
-}
+# 在 Ubuntu 中
+ls /mnt/shared/Download/
 ```
 
-### Q17: 支持 Docker 部署吗？
+---
 
-支持！但需要 Termux 内的 Docker 环境（如 `proot-distro` 安装 Debian 后运行 Docker）。更推荐使用原生 Node.js 安装方式。
+### Q23: 可以在 Termux 直接安装，不用 proot-distro 吗？
 
-建议参考 `openclaw-cn-termux` 项目的 `docker-setup.sh` 了解 Docker 部署选项。
+技术上可以，但存在兼容性问题（库版本、glibc 版本等）。**不推荐**。如果坚持尝试：
+
+```bash
+# 在 Termux 中
+pkg install nodejs
+npm install -g openclaw-cn-termux
+```
+
+但可能会遇到各种构建错误。
+
+---
+
+### Q24: 支持 Docker 吗？
+
+Ubuntu 容器内可以安装 Docker，但需要嵌套虚拟化，性能较差。推荐直接使用系统服务（systemd）管理。
 
 ---
 
@@ -237,9 +398,11 @@ cat ~/.openclaw/gateway.log
 - **官方文档**: https://clawd.org.cn/docs
 - **GitHub Issues**: https://github.com/jiulingyun/openclaw-cn/issues
 - **Discord 社区**: https://discord.gg/clawd
-- **中文交流群**: 参考项目 README
+- **中文交流**: 参考项目 README 和 Discussions
 
 提交 Issue 时请提供：
 - Termux 版本 (`termux-info`)
-- 安装日志
-- `~/.openclaw/openclaw.json`（脱敏后）
+- Ubuntu 版本 (`lsb_release -a`)
+- Node.js 版本 (`node --version`)
+- `~/.openclaw/openclaw.json`（脱敏 API Key）
+- 错误日志 (`tail -50 ~/.openclaw/gateway.log`)
