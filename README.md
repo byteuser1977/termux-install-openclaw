@@ -93,7 +93,8 @@ openclaw
 - ✅ **配置预置**: 提供默认配置，开箱即用
 - ✅ **完整文档**: 安装手册 + 故障排查 + FAQ
 - ✅ **软件渲染支持**: 无 GPU 加速设备也可运行
-- ✅ **服务脚本**: 包含启动/停止/检查依赖辅助脚本（规划中）
+- ✅ **服务脚本**: `start-service.sh` / `stop-service.sh` 支持后台运行
+- ✅ **依赖检查**: `check-deps.sh` 快速诊断环境问题
 
 ---
 
@@ -134,21 +135,22 @@ termux-install-openclaw/
 │   ├── troubleshooting.md  # 故障排查指南
 │   └── faq.md              # 常见问题解答
 │
-├── config/                 # 默认配置文件（规划中）
-│   ├── config.ini
-│   └── controls.ini
+├── config/                 # 默认配置文件
+│   ├── config.ini          # 图形/音频/性能配置
+│   └── controls.ini        # 键盘/触摸/手柄映射
 │
-├── scripts/                # 辅助脚本（规划中）
-│   ├── start-service.sh
-│   ├── stop-service.sh
-│   └── check-deps.sh
+├── scripts/                # 辅助脚本
+│   ├── install.sh          # 主安装逻辑（由顶层 install.sh 调用）
+│   ├── start-service.sh    # 后台启动 OpenClaw
+│   ├── stop-service.sh     # 停止 OpenClaw 服务
+│   └── check-deps.sh       # 依赖检查工具
 │
 ├── release/                # 预编译二进制包和安装包
 │   ├── termux-app_v0.119.0-beta.3+apt-android-7-github-debug_arm64-v8a.apk  # Termux APK（调试版）
 │   └── openclaw-android-arm64.tar.gz  # OpenClaw 预编译包（规划中）
 │
-└── patches/                # Android/Termux 专用补丁（如有）
-    └── android-compat.patch
+└── patches/                # Android/Termux 专用补丁
+    └── README.md           # 补丁使用说明
 ```
 
 ---
@@ -280,6 +282,33 @@ openclaw --version 2>/dev/null || echo "未安装或路径问题"
 
 # 4. 调试运行
 OPENCLAW_DEBUG=1 openclaw 2>&1 | tee ~/openclaw-debug.log
+```
+
+### 服务管理
+
+安装完成后，可以使用服务脚本以后台方式运行 OpenClaw：
+
+```bash
+# 启动服务（后台运行，日志输出到 ~/.openclaw/service.log）
+$PREFIX/share/openclaw/scripts/start-service.sh
+
+# 停止服务
+$PREFIX/share/openclaw/scripts/stop-service.sh
+
+# 或使用本地副本
+cd /path/to/termux-install-openclaw
+./scripts/start-service.sh
+./scripts/stop-service.sh
+```
+
+### 依赖检查
+
+遇到问题时，运行依赖检查脚本获取诊断信息：
+
+```bash
+$PREFIX/share/openclaw/scripts/check-deps.sh
+# 或
+./scripts/check-deps.sh
 ```
 
 ---
