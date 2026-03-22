@@ -303,6 +303,23 @@ echo 'export PATH="$HOME/.local/bin:$PREFIX/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
+### 5.4 服务管理
+
+安装完成后，可以使用服务脚本以后台方式运行 OpenClaw，适用于需要长时间运行或作为服务的场景：
+
+```bash
+# 启动服务（后台运行，日志输出到 ~/.openclaw/service.log）
+$PREFIX/share/openclaw/scripts/start-service.sh
+
+# 停止服务
+$PREFIX/share/openclaw/scripts/stop-service.sh
+
+# 检查依赖和环境状态
+$PREFIX/share/openclaw/scripts/check-deps.sh
+```
+
+这些脚本也保留在项目根目录的 `scripts/` 文件夹中，可直接使用。
+
 ---
 
 ## ⚙️ 配置说明
