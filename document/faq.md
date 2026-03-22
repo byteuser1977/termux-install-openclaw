@@ -4,7 +4,7 @@
 
 ### Q1: 为什么需要 proot-distro 和 Ubuntu？
 
-OpenClaw-CN 是为标准 Linux 环境设计的，依赖许多 Linux 工具和库。Termux 本身是 Android 上的 Linux 用户空间，但某些库可能缺失或版本不符。通过 proot-distro 运行完整的 Ubuntu 系统可以保证与服务器部署环境的完全一致，避免兼容性问题。
+OpenClaw 是为标准 Linux 环境设计的，依赖许多 Linux 工具和库。Termux 本身是 Android 上的 Linux 用户空间，但某些库可能缺失或版本不符。通过 proot-distro 运行完整的 Ubuntu 系统可以保证与服务器部署环境的完全一致，避免兼容性问题。
 
 **简言之**: 这是最稳定、最接近生产环境的安装方式。
 
@@ -21,20 +21,39 @@ https://github.com/termux/termux-app/releases
 
 ### Q3: proot-distro 安装 Ubuntu 很慢怎么办？
 
-首次安装需要下载约 200-300 MB 的 rootfs 镜像。可以更换为国内镜像源加速：
+首次安装需要下载约 200-300 MB 的 rootfs 镜像。可以使用国内镜像加速：
+
+**方法1: 使用清华镜像（推荐）**
+
+在 Termux 中设置环境变量：
 
 ```bash
-# 在 Termux 中执行前，编辑或创建
-mkdir -p ~/.proot-distro
-cat > ~/.proodistrotostatic/ etc/apt/sources.list <<'EOF'
-# 清华大学镜像
-deb http://mirrors.tuna.tsinghua.edu.cn/termux/proot-distro/ubuntu-22.04 jammy main
-# 或使用官方源
-# deb http://termux.net/proot-distro/ubuntu-22.04 jammy main
-EOF
+export PROOT_DISTRO_MIRROR="https://mirrors.tuna.tsinghua.edu.cn/termux/proot-distro"
+proot-distro install ubuntu-22.04
 ```
 
-或在 `proot-distro install` 时指定镜像。
+也可以将 `export PROOT_DISTRO_MIRROR="..."` 加入 `~/.bashrc` 永久生效。
+
+**方法2: 使用代理**
+
+如果网络环境特殊，可以配置代理：
+
+```bash
+export http_proxy="http://your-proxy:port"
+export https_proxy="http://your-proxy:port"
+proot-distro install ubuntu-22.04
+```
+
+**方法3: 手动下载并安装**
+
+```bash
+# 手动下载 rootfs.tar.gz 到 Termux
+cd ~
+wget https://mirrors.tuna.tsinghua.edu.cn/termux/proot-distro/ubuntu-22.04/rootfs.tar.gz
+
+# 安装（会使用本地文件）
+proot-distro install ubuntu-22.04
+```
 
 ---
 

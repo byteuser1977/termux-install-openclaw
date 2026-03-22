@@ -24,15 +24,27 @@ apt install termux-tools -y
 
 **原因**: 网络不稳定或镜像源不可用  
 **解决**:
+
+**方法1: 使用清华镜像（推荐）**
+
+在 Termux 中设置环境变量：
+
 ```bash
-# 检查网络
-ping -c 3 mirrors.tuna.tsinghua.edu.cn
-
-# 清理并重试
-proot-distro remove ubuntu-22.04
+export PROOT_DISTRO_MIRROR="https://mirrors.tuna.tsinghua.edu.cn/termux/proot-distro"
 proot-distro install ubuntu-22.04
+```
 
-# 或使用清华镜像（在 ~/.proot-distro/ 中配置）
+可以将 `export PROOT_DISTRO_MIRROR="..."` 加入 `~/.bashrc` 永久生效。
+
+**方法2: 手动下载并安装**
+
+```bash
+# 手动下载 rootfs.tar.gz
+cd ~
+wget https://mirrors.tuna.tsinghua.edu.cn/termux/proot-distro/ubuntu-22.04/rootfs.tar.gz
+
+# 安装（使用本地文件）
+proot-distro install ubuntu-22.04
 ```
 
 ---
