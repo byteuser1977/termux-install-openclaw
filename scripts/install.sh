@@ -172,8 +172,17 @@ install_openclaw() {
     log_info "安装 Termux 服务脚本..."
     local scripts_install_dir="$INSTALL_PREFIX/share/openclaw/scripts"
     mkdir -p "$scripts_install_dir"
-    cp -r "$SCRIPT_DIR/." "$scripts_install_dir/"
+    # 只复制服务脚本，不包括 install.sh 本身
+    cp "$SCRIPT_DIR/start-service.sh" "$SCRIPT_DIR/stop-service.sh" "$SCRIPT_DIR/check-deps.sh" "$scripts_install_dir/"
     chmod +x "$scripts_install_dir"/*.sh
+
+    # 安装默认配置文件
+    log_info "安装默认配置文件..."
+    local config_install_dir="$INSTALL_PREFIX/etc/openclaw"
+    mkdir -p "$config_install_dir"
+    if [ -d "$CONFIG_DIR" ]; then
+        cp "$CONFIG_DIR/config.ini" "$CONFIG_DIR/controls.ini" "$config_install_dir/" 2>/dev/null || true
+    fi
 
     # 创建用户配置目录
     mkdir -p "$HOME/.openclaw"
