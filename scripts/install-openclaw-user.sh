@@ -17,10 +17,26 @@ log_ok()    { echo -e "${GREEN}[OK]${NC} $*" >&2; }
 log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*" >&2; }
 log_error() { echo -e "${RED}[ERR]${NC} $*" >&2; }
 
+is_interactive() {
+    [ -t 0 ] || return 1
+}
+
+read_input() {
+    local prompt="$1"
+    local var_name="$2"
+    local default="$3"
+    if is_interactive; then
+        read -p "$prompt" "$var_name"
+    else
+        log_warn "非交互环境，使用默认值: $default"
+        eval "$var_name=$default"
+    fi
+}
+
 # 检查是否在 openclaw 用户下
 if [ "$USER" != "openclaw" ]; then
     log_warn "当前用户为 $USER，建议在 openclaw 用户下运行"
-    read -p "是否仍要继续? (y/N): " continue_anyway
+    read_input "是否仍要继续? (y/N): " continue_anyway "N"
     if [[ ! "$continue_anyway" =~ ^[Yy]$ ]]; then
         log_info "请切换到 openclaw 用户后重新运行: su - openclaw"
         exit 0
@@ -69,7 +85,7 @@ log_info "2/3 安装 OpenClaw-CN-Termux..."
 
 # 配置 npm 镜像（国内用户加速）
 echo "是否使用国内 npm 镜像加速下载？"
-read -p "使用国内镜像？(Y/n): " use_mirror
+read_input "使用国内镜像？(Y/n): " use_mirror "Y"
 if [[ ! "$use_mirror" =~ ^[Nn]$ ]]; then
     npm config set registry https://registry.npmmirror.com
     log_ok "npm 镜像已设置为国内"
@@ -79,7 +95,7 @@ fi
 echo "选择包管理器:"
 echo "  1) pnpm (推荐，更快)"
 echo "  2) npm"
-read -p "选择 [1-2]: " pm_choice
+read_input "选择 [1-2]: " pm_choice "1"
 
 case "$pm_choice" in
     1)
