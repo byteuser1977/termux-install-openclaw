@@ -20,8 +20,8 @@
 
 本项目提供 **Termux + Ubuntu proot-distro 安装指南**，帮助你在 Android 设备上快速部署 OpenClaw-CN 社区版。
 
-官方网站：https://clawd.org.cn  
-项目仓库：https://github.com/jiulingyun/openclaw-cn  
+.
+项目仓库：https://github.com/byteuser1977/openclaw-cn-termux  
 上游项目：https://github.com/openclaw/openclaw
 
 ---
@@ -51,10 +51,10 @@ su - openclaw
 # 5️⃣ 使用 nvm 安装 Node.js 24
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 \. "$HOME/.nvm/nvm.sh"
-nvm install --lts
+nvm install 24
 nvm alias default 24
 
-# 6️⃣ 安装 OpenClaw-CN
+# 6️⃣ 安装 OpenClaw-Termux
 npm install -g openclaw-cn-termux@latest
 # 或使用 pnpm 加速
 npm install -g pnpm
@@ -65,7 +65,7 @@ openclaw-cn-termux onboard  # 交互式配置
 openclaw-cn-termux gateway  # 启动网关
 
 # 8️⃣ 访问 Web UI
-# 浏览器打开: http://localhost:1880
+# 浏览器打开: http://localhost:18789
 ```
 
 **预计耗时**: 30-60 分钟（依赖网络和设备性能）
