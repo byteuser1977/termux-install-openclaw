@@ -85,7 +85,9 @@ if [ "$USER" = "root" ]; then
     else
         log_info "切换到 openclaw 用户..."
         # 使用 su 切换用户并重新执行脚本
-        su - openclaw -c "cd $(pwd) && bash $0"
+        # 获取脚本的绝对路径
+        SCRIPT_PATH="$(readlink -f "$0")"
+        su - openclaw -c "bash '$SCRIPT_PATH'"
         exit 0
     fi
 elif [ "$USER" = "openclaw" ]; then
