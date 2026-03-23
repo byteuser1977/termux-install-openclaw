@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Ubuntu 一键安装 OpenClaw-CN 脚本
-# 在 Ubuntu (proot-distro) 环境中运行
+# AidLux 一键安装 OpenClaw-CN 脚本
+# 在 AidLux 环境中运行
 
 set -e
 
@@ -16,10 +16,9 @@ log_ok()    { echo -e "${GREEN}[OK]${NC} $*" >&2; }
 log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*" >&2; }
 log_error() { echo -e "${RED}[ERR]${NC} $*" >&2; }
 
-# 检查是否在 Ubuntu 中
+# 检查是否在 Linux 环境中
 if ! command -v apt &>/dev/null; then
-    log_error "请在 Ubuntu 环境中运行此脚本"
-    log_error "先执行: proot-distro login ubuntu"
+    log_error "请在 Linux (AidLux) 环境中运行此脚本"
     exit 1
 fi
 
@@ -29,101 +28,39 @@ log_info "=========================================="
 echo ""
 
 # 1. 更新系统
-log_info "1/7 更新系统包..."
+log_info "1/4 更新系统包..."
 apt update -y
-apt upgrade -y
 log_ok "系统已更新"
 
-# 2. 安装必要软件
-log_info "2/7 安装必要软件包..."
-apt install -y \
-    sudo \
-    ssh \
-    nginx \
-    curl \
-    wget \
-    ca-certificates \
-    jq \
-    locales \
-    language-pack-zh-hans
-log_ok "软件包安装完成"
-
-# 3. 配置中文 locale
-log_info "3/7 配置中文环境..."
-if ! locale -a | grep -q "zh_CN.utf8"; then
-    locale-gen zh_CN.UTF-8
-fi
-update-locale LANG=zh_CN.UTF-8
-export LANG=zh_CN.UTF-8
-export LC_ALL=zh_CN.UTF-8
-log_ok "中文环境已配置"
-
-# 4. 创建 openclaw 用户（如果不存在）
-log_info "4/7 检查 openclaw 用户..."
-if ! id "openclaw" &>/dev/null; then
-    log_info "创建 openclaw 用户..."
-    adduser --disabled-password --gecos "" openclaw
-    usermod -aG sudo openclaw
-    log_ok "用户 openclaw 已创建"
-else
-    log_ok "用户 openclaw 已存在"
-fi
-
-# 5. 询问是否切换到 openclaw 用户
-echo ""
-log_info "5/7 切换到 openclaw 用户进行安装"
-echo "建议在 openclaw 用户下运行 OpenClaw。"
-read -p "是否切换到 openclaw 用户继续安装？(Y/n): " switch_user
-
-if [[ "$switch_user" =~ ^[Nn]$ ]]; then
-    log_warn "将在当前用户下安装（不推荐）"
-    OPENCLAW_USER="${USER}"
-    HOME_DIR="${HOME}"
-else
-    OPENCLAW_USER="openclaw"
-    HOME_DIR="/home/openclaw"
-    # 如果当前就是 openclaw，无需切换
-    if [ "$USER" != "openclaw" ]; then
-        log_info "切换到 openclaw 用户..."
-        exec sudo -u "$OPENCLAW_USER" -i bash "$0" "$@"
-        exit 0
-    fi
-fi
-
-# 现在应该在 openclaw 用户下
+# 当前用户就是 aidlux 用户
 log_ok "当前用户: $USER"
 log_ok "家目录: $HOME"
 
-# 6. 安装 nvm 和 Node.js（如果需要）
+# 2. 安装 nvm 和 Node.js
 echo ""
-log_info "6/7 安装 nvm 和 Node.js..."
-if [ "$NODE_OK" = "false" ]; then
-    log_info "安装 nvm 和 Node.js..."
+log_info "2/4 安装 nvm 和 Node.js..."
 
-    # 下载并安装 nvm
-    export NVM_DIR="$HOME/.nvm"
-    if [ -d "$NVM_DIR" ]; then
-        log_info "nvm 已存在，跳过安装"
-    else
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-    fi
-
-    # 加载 nvm
-    \. "$NVM_DIR/nvm.sh"
-
-    # 安装 Node.js 24
-    nvm install 24
-    nvm alias default 24
-    nvm use 24
-
-    log_ok "Node.js 安装完成: $(node --version)"
-    log_ok "npm 版本: $(npm --version)"
+# 下载并安装 nvm
+export NVM_DIR="$HOME/.nvm"
+if [ -d "$NVM_DIR" ]; then
+    log_info "nvm 已存在，跳过安装"
 else
-    log_ok "跳过 Node.js 安装"
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 fi
 
-# 7. 安装 OpenClaw-Termux
-log_info "7/7 安装 OpenClaw-Cn-Termux..."
+# 加载 nvm
+\. "$NVM_DIR/nvm.sh"
+
+# 安装 Node.js 24
+nvm install 24
+nvm alias default 24
+nvm use 24
+
+log_ok "Node.js 安装完成: $(node --version)"
+log_ok "npm 版本: $(npm --version)"
+
+# 3. 安装 OpenClaw-CN
+log_info "3/4 安装 OpenClaw-CN-Termux..."
 
 # 配置 npm 镜像（国内用户加速）
 echo "是否使用国内 npm 镜像加速下载？"
@@ -170,7 +107,7 @@ log_info "验证安装..."
 if command -v openclaw-termux &>/dev/null; then
     OPENCLAW_CMD="openclaw-termux"
 elif command -v openclaw-cn-termux &>/dev/null; then
-    OPENCLAW_CMD="openclaw-termux"
+    OPENCLAW_CMD="openclaw-cn-termux"
 else
     log_error "无法找到 openclaw-termux 命令"
     exit 1
@@ -183,11 +120,13 @@ log_ok "版本: $OPENCLAW_VER"
 # 创建配置目录
 mkdir -p "$HOME/.openclaw"
 
-# 完成
+# 4. 完成
+log_info "4/4 配置完成"
+
 cat <<EOF
 
 ${GREEN}╔══════════════════════════════════════════════╗${NC}
-${GREEN}║   OpenClaw-Termux 安装成功！                   ║${NC}
+${GREEN}║   OpenClaw-AidLux 安装成功！                   ║${NC}
 ${GREEN}╚══════════════════════════════════════════════╝${NC}
 
 安装信息:
@@ -222,8 +161,8 @@ ${GREEN}╚═══════════════════════
 
 3. **访问 Web 控制界面**:
    http://localhost:18789  
-  或 ***访问openclaw-termux tui***：
-   openclaw-termux tui
+   或 ***访问openclaw-termux tui***：
+   ${BLUE}$OPENCLAW_CMD tui${NC}
 
 4. **后台运行** (可选):
    nohup $OPENCLAW_CMD gateway > ~/.openclaw/gateway.log 2>&1 &

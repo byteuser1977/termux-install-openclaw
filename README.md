@@ -1,10 +1,11 @@
-# Termux Install OpenClaw
+# Termux & AidLux Install OpenClaw
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Termux](https://img.shields.io/badge/Termux-Install-blue)](https://termux.com)
+[![AidLux](https://img.shields.io/badge/AidLux-Install-purple)](https://www.aidlux.com)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-AI-Assistant-green)](https://github.com/OpenClaw/OpenClaw)
 
-**在 Android Termux 环境中通过 Ubuntu proot-distro 安装 OpenClaw（AI 智能助手系统）**
+**在 Android 设备上通过 Termux 或 AidLux 安装 OpenClaw（AI 智能助手系统）**
 
 ---
 
@@ -14,11 +15,15 @@
 
 **Termux** 是一款强大的 Android 终端模拟器和 Linux 环境应用，提供完整的包管理器和命令行工具链，无需 root 权限即可在手机上运行 Linux 软件。
 
+### 什么是 AidLux？
+
+**AidLux** 是一个基于 Android 的完整 Linux 发行版，提供桌面级 Linux 体验，支持多种架构，是在 Android 上运行 Linux 应用的理想选择。
+
 ### 什么是 OpenClaw？
 
 **OpenClaw** 是一款开源的 AI 智能助手系统，支持多渠道消息接入（WhatsApp、Telegram、Slack、Discord、飞书、钉钉、企业微信、QQ），提供语音交互、Canvas 工作区、技能扩展等能力。
 
-本项目提供 **Termux + Ubuntu proot-distro 安装指南**，帮助你在 Android 设备上快速部署 OpenClaw-CN 社区版。
+本项目提供 **Termux + Ubuntu proot-distro** 和 **AidLux** 两种安装方式，帮助你在 Android 设备上快速部署 OpenClaw-CN 社区版。
 
 .
 项目仓库：https://github.com/byteuser1977/openclaw-cn-termux  
@@ -27,6 +32,17 @@
 ---
 
 ## 🚀 快速开始（概览）
+
+### 选择安装方式
+
+| 方式 | 推荐场景 | 文档 |
+|------|---------|------|
+| **Termux + Ubuntu** | 希望在 Termux 中体验完整 Linux 环境 | [installation.md](document/installation.md) |
+| **AidLux** | 希望使用完整的 Linux 桌面环境，安装更简单 | [aidlux-installation.md](document/aidlux-installation.md) |
+
+---
+
+### Termux 方式概览
 
 详细步骤请阅读 [installation.md](document/installation.md)，以下是概要流程：
 
@@ -72,6 +88,44 @@ openclaw-cn-termux gateway  # 启动网关
 
 ---
 
+### AidLux 方式概览
+
+详细步骤请阅读 [aidlux-installation.md](document/aidlux-installation.md)，以下是概要流程：
+
+```bash
+# 1️⃣ 在 AidLux 中准备环境
+apt update -y
+
+# 2️⃣ 使用一键脚本安装（推荐）
+git clone https://github.com/byteuser1977/termux-install-openclaw.git
+cd termux-install-openclaw
+bash scripts/install-aidlux.sh
+
+# 或手动安装：
+# 3️⃣ 安装 nvm 和 Node.js 24
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+. "$HOME/.nvm/nvm.sh"
+nvm install 24
+nvm alias default 24
+
+# 4️⃣ 安装 OpenClaw-Termux
+npm install -g openclaw-cn-termux@latest
+# 或使用 pnpm 加速
+npm install -g pnpm
+pnpm add -g openclaw-cn-termux@latest
+
+# 5️⃣ 配置并启动
+openclaw-termux onboard  # 交互式配置
+openclaw-termux gateway  # 启动网关
+
+# 6️⃣ 访问 Web UI
+# 浏览器打开: http://localhost:18789
+```
+
+**预计耗时**: 15-20 分钟（依赖网络和设备性能）
+
+---
+
 ## 📋 前置要求
 
 | 项目 | 要求 |
@@ -93,17 +147,21 @@ termux-install-openclaw/
 ├── scripts/
 │   ├── install-ubuntu.sh   # 一键安装 Ubuntu（在 Termux 中运行）
 │   ├── install-openclaw.sh # 一键安装 OpenClaw（在 Ubuntu 中运行）
+│   ├── install-aidlux.sh   # 一键安装 OpenClaw（在 AidLux 中运行）
 │   ├── start-gateway.sh    # 启动 Gateway 服务
 │   ├── stop-gateway.sh     # 停止服务
 │   └── check-env.sh        # 环境诊断工具
 ├── config/
 │   └── openclaw.json.example  # OpenClaw 配置模板
 ├── document/
-│   ├── installation.md    # ⭐ 详细安装手册（必读）
-│   ├── troubleshooting.md # 故障排查
-│   └── faq.md             # 常见问题
-├── README.md              # 本文件（快速指引）
-└── LICENSE                # MIT 许可证
+│   ├── installation.md       # ⭐ Termux 详细安装手册（必读）
+│   ├── aidlux-installation.md # ⭐ AidLux 详细安装手册（必读）
+│   ├── troubleshooting.md    # 故障排查
+│   └── faq.md                # 常见问题
+├── release/
+│   └── termux-app_v0.119.0-beta.3+apt-android-7-github-debug_arm64-v8a.apk
+├── README.md                 # 本文件（快速指引）
+└── LICENSE                   # MIT 许可证
 ```
 
 ---
@@ -112,15 +170,29 @@ termux-install-openclaw/
 
 | 文档 | 说明 |
 |------|------|
-| **[installation.md](document/installation.md)** | ⭐ **完整安装流程**（10 章，从 Termux 到运行） |
+| **[installation.md](document/installation.md)** | ⭐ **Termux 完整安装流程**（10 章，从 Termux 到运行） |
+| **[aidlux-installation.md](document/aidlux-installation.md)** | ⭐ **AidLux 完整安装流程**（更简单快速） |
 | **[faq.md](document/faq.md)** | 常见问题（24+ Q&A，覆盖安装、配置、插件、性能） |
 | **[troubleshooting.md](document/troubleshooting.md)** | 故障排查（网络、权限、端口、内存等） |
 
-**请务必先阅读 [installation.md](document/installation.md) 再开始安装！**
+**请务必先阅读对应文档再开始安装！**
 
 ---
 
-## ✨ 为什么选择 proot-distro + Ubuntu？
+## ✨ 如何选择安装方式？
+
+### Termux vs AidLux 对比
+
+| 对比项 | Termux + Ubuntu | AidLux |
+|--------|-----------------|--------|
+| 安装难度 | 中等（需要配置 proot-distro） | ⭐⭐⭐⭐⭐ 简单直接 |
+| 环境兼容性 | ⭐⭐⭐⭐⭐ 与生产环境一致 | ⭐⭐⭐⭐⭐ 完整 Linux 环境 |
+| 安装耗时 | 30-60 分钟 | 15-20 分钟 |
+| 桌面环境 | 无（纯终端） | ⭐⭐⭐⭐⭐ 完整 Linux 桌面 |
+| 资源占用 | 较轻 | 中等 |
+| 推荐度 | ✅ 推荐 | ✅ **初学者更推荐** |
+
+### Termux + Ubuntu 方式
 
 | 对比项 | Termux 原生 | proot-distro + Ubuntu |
 |--------|-------------|----------------------|
@@ -275,16 +347,16 @@ hostname -I
 
 ```bash
 # 启动网关（前台）
-openclaw-cn-termux gateway
+openclaw-termux gateway
 
 # 后台运行
-nohup openclaw-cn-termux gateway > ~/.openclaw/gateway.log 2>&1 &
+nohup openclaw-termux gateway > ~/.openclaw/gateway.log 2>&1 &
 
 # 停止
 pkill -f "openclaw.*gateway"
 
-# 使用 systemd（推荐）
-sudo systemctl start openclaw
+# 使用 init.d（推荐）
+sudo service start openclaw
 sudo systemctl enable openclaw
 ```
 
@@ -365,6 +437,7 @@ https://github.com/byteuser1977/termux-install-openclaw/issues
 - **Discord**: https://discord.gg/clawd
 - **Termux Wiki**: https://wiki.termux.com
 - **proot-distro**: https://github.com/termux/proot-distro
+- **AidLux 官网**: https://www.aidlux.com
 
 ---
 
@@ -374,4 +447,4 @@ https://github.com/byteuser1977/termux-install-openclaw/issues
 
 ---
 
-**注意**: 本仓库仅包含安装指南和辅助脚本，不包含 OpenClaw 源码。OpenClaw 代码遵循其自身的 MIT 许可证。请阅读 [installation.md](document/installation.md) 开始安装。
+**注意**: 本仓库仅包含安装指南和辅助脚本，不包含 OpenClaw 源码。OpenClaw 代码遵循其自身的 MIT 许可证。请阅读 [installation.md](document/installation.md)（Termux 方式）或 [aidlux-installation.md](document/aidlux-installation.md)（AidLux 方式）开始安装。
