@@ -69,35 +69,43 @@ else
     log_ok "用户 openclaw 已存在"
 fi
 
-# 5. 询问是否切换到 openclaw 用户
+# 5. 检查并切换到 openclaw 用户
 echo ""
-log_info "5/7 切换到 openclaw 用户进行安装"
-echo "建议在 openclaw 用户下运行 OpenClaw。"
-read -p "是否切换到 openclaw 用户继续安装？(Y/n): " switch_user
+log_info "5/7 检查用户环境"
 
-if [[ "$switch_user" =~ ^[Nn]$ ]]; then
-    log_warn "将在当前用户下安装（不推荐）"
-    OPENCLAW_USER="${USER}"
-    HOME_DIR="${HOME}"
-else
-    OPENCLAW_USER="openclaw"
-    HOME_DIR="/home/openclaw"
-    # 如果当前就是 openclaw，无需切换
-    if [ "$USER" != "openclaw" ]; then
+# 检查当前用户
+if [ "$USER" = "root" ]; then
+    # root 用户需要切换到 openclaw
+    log_info "当前为 root 用户，需要切换到 openclaw 用户继续安装"
+    echo "建议在 openclaw 用户下运行 OpenClaw。"
+    read -p "是否切换到 openclaw 用户继续安装？(Y/n): " switch_user
+    
+    if [[ "$switch_user" =~ ^[Nn]$ ]]; then
+        log_warn "将在 root 用户下安装（不推荐）"
+    else
         log_info "切换到 openclaw 用户..."
-        exec su - "$OPENCLAW_USER" -c "$0" "$@"
+        # 使用 su 切换用户并重新执行脚本
+        su - openclaw -c "cd $(pwd) && bash $0"
         exit 0
     fi
+elif [ "$USER" = "openclaw" ]; then
+    log_ok "当前用户已是 openclaw，继续安装"
+else
+    log_warn "当前用户为 $USER，建议在 openclaw 用户下运行"
 fi
 
-# 现在应该在 openclaw 用户下
+# 现在应该在正确的用户下
 log_ok "当前用户: $USER"
 log_ok "家目录: $HOME"
 
-# 6. 安装 nvm 和 Node.js（如果需要）
+# 6. 安装 nvm 和 Node.js
 echo ""
 log_info "6/7 安装 nvm 和 Node.js..."
-if [ "$NODE_OK" = "false" ]; then
+
+# 检查是否已安装 Node.js
+if command -v node &>/dev/null && [[ $(node --version) =~ ^v2[4-9] ]]; then
+    log_ok "Node.js $(node --version) 已安装，跳过"
+else
     log_info "安装 nvm 和 Node.js..."
 
     # 下载并安装 nvm
@@ -118,8 +126,6 @@ if [ "$NODE_OK" = "false" ]; then
 
     log_ok "Node.js 安装完成: $(node --version)"
     log_ok "npm 版本: $(npm --version)"
-else
-    log_ok "跳过 Node.js 安装"
 fi
 
 # 7. 安装 OpenClaw-Termux
