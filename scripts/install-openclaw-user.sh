@@ -95,7 +95,7 @@ fi
 echo "选择包管理器:"
 echo "  1) pnpm (推荐，更快)"
 echo "  2) npm"
-read_input "选择 [1-2]: " pm_choice "1"
+read_input "选择 [1-2]: " pm_choice "2"
 
 case "$pm_choice" in
     1)
@@ -117,7 +117,7 @@ esac
 # 执行安装
 log_info "正在安装 openclaw-cn-termux..."
 if $PKG_CMD openclaw-cn-termux@latest; then
-    log_ok "OpenClaw-CN 安装成功"
+    log_ok "OpenClaw-CN-Termux 安装成功"
 else
     log_error "安装失败，请检查网络或 npm 配置"
     exit 1
