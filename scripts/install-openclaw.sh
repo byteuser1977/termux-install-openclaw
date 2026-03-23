@@ -87,8 +87,7 @@ if [ "$USER" = "root" ]; then
         # 使用 su 切换用户并重新执行脚本
         # 获取脚本的绝对路径
         SCRIPT_PATH="$(readlink -f "$0")"
-        su - openclaw -c "bash '$SCRIPT_PATH'"
-        exit 0
+        exec su - openclaw -s /bin/bash -c "bash \"$SCRIPT_PATH\""
     fi
 elif [ "$USER" = "openclaw" ]; then
     log_ok "当前用户已是 openclaw，继续安装"
