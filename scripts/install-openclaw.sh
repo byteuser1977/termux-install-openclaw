@@ -24,7 +24,7 @@ if ! command -v apt &>/dev/null; then
 fi
 
 log_info "=========================================="
-log_info " OpenClaw-CN 一键安装脚本"
+log_info " OpenClaw-Termux 一键安装脚本"
 log_info "=========================================="
 echo ""
 
