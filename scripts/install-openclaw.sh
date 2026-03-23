@@ -85,7 +85,7 @@ else
     # 如果当前就是 openclaw，无需切换
     if [ "$USER" != "openclaw" ]; then
         log_info "切换到 openclaw 用户..."
-        exec sudo -u "$OPENCLAW_USER" -i bash "$0" "$@"
+        exec su - "$OPENCLAW_USER" -c "$0" "$@"
         exit 0
     fi
 fi
