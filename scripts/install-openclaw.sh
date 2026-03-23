@@ -29,22 +29,19 @@ log_info "=========================================="
 echo ""
 
 # 1. 更新系统
-log_info "1/8 更新系统包..."
+log_info "1/7 更新系统包..."
 apt update -y
 apt upgrade -y
 log_ok "系统已更新"
 
 # 2. 安装必要软件
-log_info "2/8 安装必要软件包..."
+log_info "2/7 安装必要软件包..."
 apt install -y \
     sudo \
     ssh \
     nginx \
     curl \
     wget \
-    git \
-    build-essential \
-    python3-pip \
     ca-certificates \
     jq \
     locales \
@@ -52,7 +49,7 @@ apt install -y \
 log_ok "软件包安装完成"
 
 # 3. 配置中文 locale
-log_info "3/8 配置中文环境..."
+log_info "3/7 配置中文环境..."
 if ! locale -a | grep -q "zh_CN.utf8"; then
     locale-gen zh_CN.UTF-8
 fi
@@ -62,7 +59,7 @@ export LC_ALL=zh_CN.UTF-8
 log_ok "中文环境已配置"
 
 # 4. 创建 openclaw 用户（如果不存在）
-log_info "4/8 检查 openclaw 用户..."
+log_info "4/7 检查 openclaw 用户..."
 if ! id "openclaw" &>/dev/null; then
     log_info "创建 openclaw 用户..."
     adduser --disabled-password --gecos "" openclaw
@@ -74,7 +71,7 @@ fi
 
 # 5. 询问是否切换到 openclaw 用户
 echo ""
-log_info "5/8 切换到 openclaw 用户进行安装"
+log_info "5/7 切换到 openclaw 用户进行安装"
 echo "建议在 openclaw 用户下运行 OpenClaw。"
 read -p "是否切换到 openclaw 用户继续安装？(Y/n): " switch_user
 
@@ -97,24 +94,9 @@ fi
 log_ok "当前用户: $USER"
 log_ok "家目录: $HOME"
 
-# 6. 检查 Node.js
-log_info "6/8 检查 Node.js 环境..."
-if command -v node &>/dev/null; then
-    NODE_VER=$(node --version | sed 's/v//')
-    MAJOR=$(echo "$NODE_VER" | cut -d. -f1)
-    if [ "$MAJOR" -ge 22 ]; then
-        log_ok "Node.js 版本: $NODE_VER (满足 ≥22 要求)"
-        NODE_OK=true
-    else
-        log_warn "Node.js 版本过低: $NODE_VER (需要 ≥22)"
-        NODE_OK=false
-    fi
-else
-    log_warn "Node.js 未安装"
-    NODE_OK=false
-fi
-
-# 7. 安装 nvm 和 Node.js（如果需要）
+# 6. 安装 nvm 和 Node.js（如果需要）
+echo ""
+log_info "6/7 安装 nvm 和 Node.js..."
 if [ "$NODE_OK" = "false" ]; then
     log_info "安装 nvm 和 Node.js..."
 
@@ -129,10 +111,10 @@ if [ "$NODE_OK" = "false" ]; then
     # 加载 nvm
     \. "$NVM_DIR/nvm.sh"
 
-    # 安装 Node.js LTS
-    nvm install --lts
-    nvm alias default --lts
-    nvm use default
+    # 安装 Node.js 24
+    nvm install 24
+    nvm alias default 24
+    nvm use 24
 
     log_ok "Node.js 安装完成: $(node --version)"
     log_ok "npm 版本: $(npm --version)"
@@ -140,15 +122,15 @@ else
     log_ok "跳过 Node.js 安装"
 fi
 
-# 8. 安装 OpenClaw-CN
-log_info "8/8 安装 OpenClaw-CN-Termux..."
+# 7. 安装 OpenClaw-CN
+log_info "7/7 安装 OpenClaw-CN-Termux..."
 
 # 配置 npm 镜像（国内用户加速）
 echo "是否使用国内 npm 镜像加速下载？"
-read -p "使用淘宝镜像？(Y/n): " use_mirror
+read -p "使用国内镜像？(Y/n): " use_mirror
 if [[ ! "$use_mirror" =~ ^[Nn]$ ]]; then
     npm config set registry https://registry.npmmirror.com
-    log_ok "npm 镜像已设置为淘宝"
+    log_ok "npm 镜像已设置为国内"
 fi
 
 # 选择包管理器
@@ -185,12 +167,12 @@ fi
 
 # 验证安装
 log_info "验证安装..."
-if command -v openclaw-cn-termux &>/dev/null; then
-    OPENCLAW_CMD="openclaw-cn-termux"
-elif command -v openclaw-termux &>/dev/null; then
+if command -v openclaw-termux &>/dev/null; then
+    OPENCLAW_CMD="openclaw-termux"
+elif command -v openclaw-cn-termux &>/dev/null; then
     OPENCLAW_CMD="openclaw-termux"
 else
-    log_error "无法找到 openclaw 命令"
+    log_error "无法找到 openclaw-termux 命令"
     exit 1
 fi
 
@@ -205,7 +187,7 @@ mkdir -p "$HOME/.openclaw"
 cat <<EOF
 
 ${GREEN}╔══════════════════════════════════════════════╗${NC}
-${GREEN}║   OpenClaw-CN 安装成功！                   ║${NC}
+${GREEN}║   OpenClaw-Termux 安装成功！                   ║${NC}
 ${GREEN}╚══════════════════════════════════════════════╝${NC}
 
 安装信息:
@@ -239,7 +221,9 @@ ${GREEN}╚═══════════════════════
    ${BLUE}$OPENCLAW_CMD gateway${NC}
 
 3. **访问 Web 控制界面**:
-   http://localhost:1880
+   http://localhost:18789  
+  或 ***访问openclaw-termux tui***：
+   openclaw-termux tui
 
 4. **后台运行** (可选):
    nohup $OPENCLAW_CMD gateway > ~/.openclaw/gateway.log 2>&1 &

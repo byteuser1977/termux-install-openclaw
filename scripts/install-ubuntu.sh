@@ -41,8 +41,7 @@ apt install -y \
     termux-api \
     proot-distro \
     curl \
-    wget \
-    ca-certificates
+    wget 
 log_ok "基础工具安装完成"
 
 # 3. 授权存储访问
@@ -121,7 +120,9 @@ ${GREEN}╚═══════════════════════
    ${BLUE}openclaw-cn-termux gateway${NC} # 启动
 
 4. **访问 Web UI**:
-   http://localhost:1880
+   http://localhost:18789
+  或 ***访问openclaw-termux tui***：
+   openclaw-termux tui
 
 查看详细文档:
    ${BLUE}cat termux-install-openclaw/document/installation.md${NC}
