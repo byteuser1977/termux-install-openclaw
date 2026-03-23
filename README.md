@@ -96,33 +96,19 @@ openclaw-cn-termux gateway  # 启动网关
 # 1️⃣ 在 AidLux 中准备环境
 apt update -y
 
-# 2️⃣ 使用一键脚本安装（推荐）
-git clone https://github.com/byteuser1977/termux-install-openclaw.git
-cd termux-install-openclaw
-bash scripts/install-aidlux.sh
+# 2️⃣ 使用一键脚本安装（推荐，一行命令）
+curl -fsSL https://raw.githubusercontent.com/byteuser1977/termux-install-openclaw/main/scripts/install-aidlux.sh | bash
 
-# 或手动安装：
-# 3️⃣ 安装 nvm 和 Node.js 24
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-. "$HOME/.nvm/nvm.sh"
-nvm install 24
-nvm alias default 24
-
-# 4️⃣ 安装 OpenClaw-Termux
-npm install -g openclaw-cn-termux@latest
-# 或使用 pnpm 加速
-npm install -g pnpm
-pnpm add -g openclaw-cn-termux@latest
-
-# 5️⃣ 配置并启动
+# 3️⃣ 安装完成后配置并启动
 openclaw-termux onboard  # 交互式配置
 openclaw-termux gateway  # 启动网关
 
-# 6️⃣ 访问 Web UI
-# 浏览器打开: http://localhost:18789
+# 4️⃣ 访问 Web UI 或 Gateway
+# Web UI: http://localhost:18789
+# Gateway API: http://localhost:18789
 ```
 
-**预计耗时**: 15-20 分钟（依赖网络和设备性能）
+**预计耗时**: 15-20 分钟（依赖网络和设备性能） 
 
 ---
 
@@ -245,7 +231,7 @@ su - openclaw
 # 使用 nvm（推荐）
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 \. "$HOME/.nvm/nvm.sh"
-nvm install --lts
+nvm install 24
 nvm alias default 24
 
 # 验证
@@ -298,8 +284,8 @@ nohup openclaw-cn-termux gateway > ~/.openclaw/gateway.log 2>&1 &
 ### 阶段 6: 访问 Web UI
 
 打开浏览器访问：
-- **Termux 内部**: http://localhost:1880
-- **局域网其他设备**: http://<设备IP>:1880
+- **Termux 内部**: http://localhost:18789
+- **局域网其他设备**: http://<设备IP>:18789
 
 查看设备 IP：
 ```bash
@@ -404,7 +390,7 @@ pnpm install -g openclaw-cn-termux@latest
 ### 无法访问 Web UI？
 
 - 确认 Gateway 已启动：`ps aux | grep openclaw`
-- 检查端口是否被占用：`lsof -i :1880`
+- 检查端口是否被占用：`lsof -i :18789`
 - 确保配置中 `"bind": "lan"` 或 `"0.0.0.0"`
 
 ### 插件无法使用？
