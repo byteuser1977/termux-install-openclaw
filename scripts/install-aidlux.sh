@@ -109,6 +109,9 @@ case "$pm_choice" in
         ;;
 esac
 
+# 安装 strip-ansi 工具
+$PKG_CMD strip-ansi  
+
 # 执行安装
 log_info "正在安装 openclaw-cn-termux..."
 if $PKG_CMD openclaw-cn-termux@latest; then
