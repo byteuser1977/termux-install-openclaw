@@ -114,8 +114,8 @@ $PKG_CMD strip-ansi
 
 # 执行安装
 log_info "正在安装 openclaw-cn-termux..."
-if $PKG_CMD openclaw-cn-termux@0.1.7-fix.1; then
-    log_ok "OpenClaw-CN 安装成功"
+if $PKG_CMD openclaw-cn-termux@0.1.9-beta.6; then
+    log_ok "OpenClaw-CN-Termux 安装成功"
 else
     log_error "安装失败，请检查网络或 npm 配置"
     exit 1
