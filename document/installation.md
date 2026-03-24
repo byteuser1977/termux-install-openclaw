@@ -472,6 +472,18 @@ curl http://localhost:18789/health
 - **Termux 内部**: `http://localhost:18789`
 - **局域网其他设备**: `http://<你的Ubuntu容器IP>:18789`
 
+#### 远程访问（SSH 隧道）
+
+如果需要从远程访问 Ubuntu 容器内的服务，可以使用 SSH 隧道：
+
+```bash
+ssh -N -L 18789:127.0.0.1:18789 openclaw@<Ubuntu容器IP>
+```
+
+然后在本地浏览器打开：
+- `http://localhost:18789/`
+- `http://localhost:18789/?token=XXX`
+
 查看容器 IP：
 
 ```bash

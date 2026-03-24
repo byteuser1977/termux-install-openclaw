@@ -369,10 +369,23 @@ curl http://localhost:18789/health
 
 ### 6.3 访问 Web 控制界面
 
-默认 UI 运行在端口 **1880**：
+默认 UI 运行在端口 **18789**，Gateway 运行在端口 **18789**：
 
-- **AidLux 内部**: `http://localhost:1880`
+- **AidLux 内部 Web UI**: `http://localhost:18789`
+- **AidLux 内部 Gateway**: `http://localhost:18789`
 - **局域网其他设备**: `http://<你的AidLux设备IP>:1880`
+
+#### 远程访问（SSH 隧道）
+
+如果需要从远程访问 AidLux 内的服务，可以使用 SSH 隧道：
+
+```bash
+ssh -N -L 18789:127.0.0.1:18789 aidlux@<AidLux设备IP>
+```
+
+然后在本地浏览器打开：
+- `http://localhost:18789/`
+- `http://localhost:18789/?token=XXX`
 
 查看设备 IP：
 
