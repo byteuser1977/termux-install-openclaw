@@ -51,6 +51,215 @@ check_termux_env() {
     fi
 }
 
+# 修复 Termux 剪贴板兼容性问题
+fix_clipboard_for_termux() {
+    local CLIPBOARD_INDEX_PATH="$PREFIX/lib/node_modules/openclaw-cn-termux/node_modules/@mariozechner/clipboard/index.js"
+    local FIX_APPLIED=false
+    
+    if [ ! -f "$CLIPBOARD_INDEX_PATH" ]; then
+        log_warn "未找到剪贴板模块，跳过修复"
+        echo "false"
+        return
+    fi
+    
+    log_info "检测到剪贴板模块，应用 Termux 兼容修复..."
+    
+    # 备份原始文件
+    if [ ! -f "$CLIPBOARD_INDEX_PATH.bak" ]; then
+        cp "$CLIPBOARD_INDEX_PATH" "$CLIPBOARD_INDEX_PATH.bak"
+        log_ok "已备份原始文件"
+    fi
+    
+    # 检查是否已经修复过
+    if grep -q "termux-clipboard-get" "$CLIPBOARD_INDEX_PATH" 2>/dev/null; then
+        log_ok "剪贴板模块已修复，跳过"
+        echo "true"
+        return
+    fi
+    
+    # 创建修复后的文件内容
+    cat > "$CLIPBOARD_INDEX_PATH" << 'CLIPBOARD_EOF'
+const { existsSync, readFileSync } = require('fs')
+const { join } = require('path')
+
+const { platform, arch } = process
+
+let nativeBinding = null
+let localFileExisted = false
+let loadError = null
+
+function isMusl() {
+  let musl = false
+  if (platform === 'linux') {
+    musl = isMuslFromFilesystem()
+    if (musl === null) {
+      musl = isMuslFromReport()
+    }
+    if (musl === null) {
+      musl = isMuslFromChildProcess()
+    }
+  }
+  return musl
+}
+
+function isMuslFromFilesystem() {
+  try {
+    return readFileSync('/usr/bin/ldd', 'utf-8').includes('musl')
+  } catch {
+    return null
+  }
+}
+
+function isMuslFromReport() {
+  const report = typeof process.report.getReport === 'function' ? process.report.getReport() : null
+  if (!report) {
+    return null
+  }
+  if (report.header && report.header.glibcVersionRuntime) {
+    return false
+  }
+  if (Array.isArray(report.sharedObjects)) {
+    if (report.sharedObjects.some(isMuslSharedObject)) {
+      return true
+    }
+  }
+  return false
+}
+
+function isMuslFromChildProcess() {
+  try {
+    require('child_process').execSync('ldd --version', { encoding: 'utf-8' }).includes('musl')
+  } catch {
+    return true
+  }
+  return false
+}
+
+function isMuslSharedObject(a) {
+  return a.includes('libc.musl-') || a.includes('ld-musl-')
+}
+
+switch (platform) {
+  case 'android':
+    switch (arch) {
+      case 'arm64':
+        // Use Termux clipboard commands for Android
+        try {
+          const { execFile } = require('child_process')
+          const { promisify } = require('util')
+          const execFileAsync = promisify(execFile)
+          nativeBinding = {
+            availableFormats: ['text/plain'],
+            getText: async () => {
+              try {
+                const { stdout } = await execFileAsync('termux-clipboard-get')
+                return stdout.toString().replace(/\n$/, '')
+              } catch (e) {
+                throw new Error('Failed to get clipboard text: ' + e.message)
+              }
+            },
+            setText: async (text) => {
+              try {
+                await execFileAsync('termux-clipboard-set', [text])
+              } catch (e) {
+                throw new Error('Failed to set clipboard text: ' + e.message)
+              }
+            },
+            hasText: async () => {
+              try {
+                await execFileAsync('termux-clipboard-get')
+                return true
+              } catch {
+                return false
+              }
+            },
+            getImageBinary: async () => null,
+            getImageBase64: async () => null,
+            setImageBinary: async () => { throw new Error('Clipboard image not supported') },
+            setImageBase64: async () => { throw new Error('Clipboard image not supported') },
+            hasImage: async () => false,
+            getHtml: async () => null,
+            setHtml: async () => { throw new Error('Clipboard HTML not supported') },
+            hasHtml: async () => false,
+            getRtf: async () => null,
+            setRtf: async () => { throw new Error('Clipboard RTF not supported') },
+            hasRtf: async () => false,
+            clear: async () => { throw new Error('Clipboard clear not supported') },
+            watch: (callback) => { return () => {} },
+            callThreadsafeFunction: () => {}
+          }
+        } catch (e) {
+          loadError = e
+        }
+        break
+      default:
+        throw new Error(`Unsupported architecture on Android: ${arch}`)
+    }
+    break
+  default:
+    throw new Error(`Unsupported OS: ${platform}, architecture: ${arch}`)
+}
+
+if (!nativeBinding) {
+  if (loadError) {
+    throw loadError
+  }
+  throw new Error(`Failed to load native binding`)
+}
+
+const { 
+  availableFormats,
+  getText,
+  getImageBinary,
+  getImageBase64,
+  getHtml,
+  getRtf,
+  setText,
+  setImageBinary,
+  setImageBase64,
+  setHtml,
+  setRtf,
+  clear,
+  hasText,
+  hasImage,
+  hasHtml,
+  hasRtf,
+  watch,
+  callThreadsafeFunction
+} = nativeBinding
+
+module.exports.availableFormats = availableFormats
+module.exports.getText = getText
+module.exports.getImageBinary = getImageBinary
+module.exports.getImageBase64 = getImageBase64
+module.exports.getHtml = getHtml
+module.exports.getRtf = getRtf
+module.exports.setText = setText
+module.exports.setImageBinary = setImageBinary
+module.exports.setImageBase64 = setImageBase64
+module.exports.setHtml = setHtml
+module.exports.setRtf = setRtf
+module.exports.clear = clear
+module.exports.hasText = hasText
+module.exports.hasImage = hasImage
+module.exports.hasHtml = hasHtml
+module.exports.hasRtf = hasRtf
+module.exports.watch = watch
+module.exports.callThreadsafeFunction = callThreadsafeFunction
+CLIPBOARD_EOF
+    
+    # 验证修复
+    if grep -q "termux-clipboard-get" "$CLIPBOARD_INDEX_PATH" 2>/dev/null; then
+        log_ok "剪贴板模块修复成功"
+        FIX_APPLIED=true
+    else
+        log_warn "自动修复可能未完全成功，请手动参考文档修复"
+        FIX_APPLIED=false
+    fi
+    
+    echo "$FIX_APPLIED"
+}
+
 # ==================== 主程序开始 ====================
 
 log_info "=========================================="
@@ -68,14 +277,14 @@ log_ok "PREFIX: $PREFIX"
 
 # ========== 第1步：更新 Termux 包 ==========
 echo ""
-log_info "1/6 更新 Termux 包..."
+log_info "1/7 更新 Termux 包..."
 pkg update -y
 pkg upgrade -y
 log_ok "Termux 包已更新"
 
 # ========== 第2步：安装必要依赖 ==========
 echo ""
-log_info "2/6 安装必要依赖..."
+log_info "2/7 安装必要依赖..."
 pkg install -y \
     git \
     curl \
@@ -91,7 +300,7 @@ log_ok "依赖安装完成"
 
 # ========== 第3步：安装 Node.js 工具 ==========
 echo ""
-log_info "3/6 安装 Node.js 工具..."
+log_info "3/7 安装 Node.js 工具..."
 
 # 显示 Node.js 版本
 log_ok "Node.js 版本: $(node --version)"
@@ -103,7 +312,7 @@ log_ok "pnpm 和 nrm 已安装"
 
 # ========== 第4步：安装 OpenClaw-cn-Termux ==========
 echo ""
-log_info "4/6 安装 OpenClaw-CN-Termux..."
+log_info "4/7 安装 OpenClaw-CN-Termux..."
 
 # 配置 npm 镜像（国内用户加速）
 echo "是否使用国内 npm 镜像加速下载？"
@@ -150,24 +359,9 @@ else
     exit 1
 fi
 
-# 验证安装
-log_info "验证安装..."
-if command -v openclaw-termux &>/dev/null; then
-    OPENCLAW_CMD="openclaw-termux"
-elif command -v openclaw-cn-termux &>/dev/null; then
-    OPENCLAW_CMD="openclaw-cn-termux"
-else
-    log_error "无法找到 openclaw-termux 命令"
-    exit 1
-fi
-
-OPENCLAW_VER=$($OPENCLAW_CMD --version 2>&1 || echo "unknown")
-log_ok "命令: $OPENCLAW_CMD"
-log_ok "版本: $OPENCLAW_VER"
-
 # ========== 第5步：创建配置目录和配置文件 ==========
 echo ""
-log_info "5/6 配置 OpenClaw..."
+log_info "5/7 配置 OpenClaw..."
 
 # 创建配置目录
 mkdir -p "$HOME/.openclaw"
@@ -207,95 +401,26 @@ mkdir -p "$HOME/.openclaw/data" "$HOME/.openclaw/memory" "$HOME/.openclaw/logs"
 
 # ========== 第6步：修复 Termux 剪贴板问题 ==========
 echo ""
-log_info "6/6 修复 Termux 剪贴板兼容性问题..."
+log_info "6/7 修复 Termux 剪贴板兼容性问题..."
 
-CLIPBOARD_FIX_APPLIED=false
-CLIPBOARD_INDEX_PATH="$PREFIX/lib/node_modules/openclaw-cn-termux/node_modules/@mariozechner/clipboard/index.js"
+CLIPBOARD_FIX_APPLIED=$(fix_clipboard_for_termux)
 
-if [ -f "$CLIPBOARD_INDEX_PATH" ]; then
-    log_info "检测到剪贴板模块，应用 Termux 兼容修复..."
-    
-    # 备份原始文件
-    if [ ! -f "$CLIPBOARD_INDEX_PATH.bak" ]; then
-        cp "$CLIPBOARD_INDEX_PATH" "$CLIPBOARD_INDEX_PATH.bak"
-        log_ok "已备份原始文件"
-    fi
-    
-    # 检查是否已经修复过
-    if grep -q "termux-clipboard-get" "$CLIPBOARD_INDEX_PATH" 2>/dev/null; then
-        log_ok "剪贴板模块已修复，跳过"
-        CLIPBOARD_FIX_APPLIED=true
-    else
-        # 应用修复：替换 arm64 的 case 块
-        # 使用 sed 替换原始代码为 Termux 兼容版本
-        sed -i '/case '\''arm64'\''/,/break/{ 
-            /case '\''arm64'\''/c\
-        case '\''arm64'\'':\
-          // Use Termux clipboard commands for Android\
-          try {\
-            const { execFile } = require('\''child_process'\'')\
-            const { promisify } = require('\''util'\'')\
-            const execFileAsync = promisify(execFile)\
-            nativeBinding = {\
-              availableFormats: ['\''text/plain'\''],\
-              getText: async () => {\
-                try {\
-                  const { stdout } = await execFileAsync('\''termux-clipboard-get'\'')\
-                  return stdout.toString().replace(\/\\n$\/,'\''\''')\
-                } catch (e) {\
-                  throw new Error('\''Failed to get clipboard text: '\'' + e.message)\
-                }\
-              },\
-              setText: async (text) => {\
-                try {\
-                  await execFileAsync('\''termux-clipboard-set'\'', [text])\
-                } catch (e) {\
-                  throw new Error('\''Failed to set clipboard text: '\'' + e.message)\
-                }\
-              },\
-              hasText: async () => {\
-                try {\
-                  await execFileAsync('\''termux-clipboard-get'\'')\
-                  return true\
-                } catch {\
-                  return false\
-                }\
-              },\
-              getImageBinary: async () => null,\
-              getImageBase64: async () => null,\
-              setImageBinary: async () => { throw new Error('\''Clipboard image not supported'\'') },\
-              setImageBase64: async () => { throw new Error('\''Clipboard image not supported'\'') },\
-              hasImage: async () => false,\
-              getHtml: async () => null,\
-              setHtml: async () => { throw new Error('\''Clipboard HTML not supported'\'') },\
-              hasHtml: async () => false,\
-              getRtf: async () => null,\
-              setRtf: async () => { throw new Error('\''Clipboard RTF not supported'\'') },\
-              hasRtf: async () => false,\
-              clear: async () => { throw new Error('\''Clipboard clear not supported'\'') },\
-              watch: (callback) => { return () => {} },\
-              callThreadsafeFunction: () => {}\
-            }\
-          } catch (e) {\
-            loadError = e\
-          }
-            /localFileExisted/d
-            /nativeBinding = require/d
-            /} catch/d
-            /loadError = e/d
-        }' "$CLIPBOARD_INDEX_PATH" 2>/dev/null
-        
-        # 验证修复
-        if grep -q "termux-clipboard-get" "$CLIPBOARD_INDEX_PATH" 2>/dev/null; then
-            log_ok "剪贴板模块修复成功"
-            CLIPBOARD_FIX_APPLIED=true
-        else
-            log_warn "自动修复可能未完全成功，请手动参考文档修复"
-        fi
-    fi
+# ========== 第7步：验证安装 ==========
+echo ""
+log_info "7/7 验证安装..."
+
+if command -v openclaw-termux &>/dev/null; then
+    OPENCLAW_CMD="openclaw-termux"
+elif command -v openclaw-cn-termux &>/dev/null; then
+    OPENCLAW_CMD="openclaw-cn-termux"
 else
-    log_warn "未找到剪贴板模块，跳过修复"
+    log_error "无法找到 openclaw-termux 命令"
+    exit 1
 fi
+
+OPENCLAW_VER=$($OPENCLAW_CMD --version 2>&1 || echo "unknown")
+log_ok "命令: $OPENCLAW_CMD"
+log_ok "版本: $OPENCLAW_VER"
 
 # ========== 安装完成 ==========
 echo ""
