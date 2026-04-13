@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# AidLux 一键安装 OpenClaw-CN 脚本
+# AidLux 一键安装 OpenClaw-cn-termux 脚本
 # 在 AidLux 环境中运行
 
 set -e
@@ -114,7 +114,7 @@ $PKG_CMD strip-ansi
 
 # 执行安装
 log_info "正在安装 openclaw-cn-termux..."
-if $PKG_CMD openclaw-cn-termux@0.1.9-beta.6; then
+if $PKG_CMD openclaw-cn-termux; then
     log_ok "OpenClaw-CN-Termux 安装成功"
 else
     log_error "安装失败，请检查网络或 npm 配置"

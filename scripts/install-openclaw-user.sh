@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Ubuntu 一键安装 OpenClaw-CN 脚本 - Part 2
+# Ubuntu 一键安装 OpenClaw-cn-termux 脚本 - Part 2
 # 在 openclaw 用户下运行
-# 安装 Node.js 和 OpenClaw-CN
+# 安装 Node.js 和 OpenClaw-cn-termux
 
 set -e
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Ubuntu 一键安装 OpenClaw-CN 脚本 - Part 1
+# Ubuntu 一键安装 OpenClaw-cn-termux 脚本 - Part 1
 # 在 Ubuntu (proot-distro) 环境中以 root 身份运行
 # 完成系统配置后，切换到 openclaw 用户执行 Part 2
 

@@ -35,14 +35,39 @@
 
 ### 选择安装方式
 
-| 方式 | 推荐场景 | 文档 |
-|------|---------|------|
-| **Termux + Ubuntu** | 希望在 Termux 中体验完整 Linux 环境 | [installation.md](document/installation.md) |
-| **AidLux** | 希望使用完整的 Linux 桌面环境，安装更简单 | [aidlux-installation.md](document/aidlux-installation.md) |
+| 方式 | 推荐场景 | 文档 | 耗时 |
+|------|---------|------|------|
+| **Termux 原生** | 快速安装、资源受限设备、轻量使用 | [termux-installation.md](document/termux-installation.md) | 10-15 分钟 |
+| **Termux + Ubuntu** | 完整 Linux 环境、生产部署 | [installation.md](document/installation.md) | 30-60 分钟 |
+| **AidLux** | 完整 Linux 桌面环境、最简单安装 | [aidlux-installation.md](document/aidlux-installation.md) | 15-20 分钟 |
 
 ---
 
-### Termux 方式概览
+### Termux 原生方式概览（推荐新手）
+
+最简单快速的安装方式，直接在 Termux 中运行，无需 Ubuntu 容器。
+
+详细步骤请阅读 [termux-installation.md](document/termux-installation.md)，以下是概要流程：
+
+```bash
+# 1️⃣ 一键安装（推荐）
+curl -fsSL https://raw.githubusercontent.com/byteuser1977/termux-install-openclaw/main/scripts/install-termux.sh | bash
+
+# 2️⃣ 配置并启动
+openclaw-termux onboard  # 交互式配置
+openclaw-termux gateway  # 启动网关
+
+# 3️⃣ 访问 Web UI
+# 浏览器打开: http://localhost:18789
+```
+
+**预计耗时**: 10-15 分钟（依赖网络和设备性能）
+
+---
+
+### Termux + Ubuntu 方式概览
+
+适合需要完整 Linux 环境、与生产环境保持一致的场景。
 
 详细步骤请阅读 [installation.md](document/installation.md)，以下是概要流程：
 
@@ -131,6 +156,7 @@ openclaw-termux gateway  # 启动网关
 termux-install-openclaw/
 ├── install.sh              # 可选：快速环境检查脚本
 ├── scripts/
+│   ├── install-termux.sh   # ⭐ 一键安装 OpenClaw（Termux 原生，推荐）
 │   ├── install-ubuntu.sh   # 一键安装 Ubuntu（在 Termux 中运行）
 │   ├── install-openclaw.sh # 一键安装 OpenClaw（在 Ubuntu 中运行）
 │   ├── install-aidlux.sh   # 一键安装 OpenClaw（在 AidLux 中运行）
@@ -140,10 +166,12 @@ termux-install-openclaw/
 ├── config/
 │   └── openclaw.json.example  # OpenClaw 配置模板
 ├── document/
-│   ├── installation.md       # ⭐ Termux 详细安装手册（必读）
-│   ├── aidlux-installation.md # ⭐ AidLux 详细安装手册（必读）
+│   ├── termux-installation.md # ⭐ Termux 原生安装手册（推荐）
+│   ├── installation.md       # Termux + Ubuntu 安装手册
+│   ├── aidlux-installation.md # AidLux 安装手册
 │   ├── troubleshooting.md    # 故障排查
-│   └── faq.md                # 常见问题
+│   ├── faq.md                # 常见问题
+│   └── openclaw-termux-clipboard-fix-guide.md # 剪贴板修复指南
 ├── release/
 │   └── termux-app_v0.119.0-beta.3+apt-android-7-github-debug_arm64-v8a.apk
 ├── README.md                 # 本文件（快速指引）
@@ -156,10 +184,12 @@ termux-install-openclaw/
 
 | 文档 | 说明 |
 |------|------|
-| **[installation.md](document/installation.md)** | ⭐ **Termux 完整安装流程**（10 章，从 Termux 到运行） |
-| **[aidlux-installation.md](document/aidlux-installation.md)** | ⭐ **AidLux 完整安装流程**（更简单快速） |
+| **[termux-installation.md](document/termux-installation.md)** | ⭐ **Termux 原生安装手册**（推荐，最简单快速） |
+| **[installation.md](document/installation.md)** | Termux + Ubuntu 完整安装流程（完整 Linux 环境） |
+| **[aidlux-installation.md](document/aidlux-installation.md)** | AidLux 完整安装流程（Linux 桌面环境） |
 | **[faq.md](document/faq.md)** | 常见问题（24+ Q&A，覆盖安装、配置、插件、性能） |
 | **[troubleshooting.md](document/troubleshooting.md)** | 故障排查（网络、权限、端口、内存等） |
+| **[openclaw-termux-clipboard-fix-guide.md](document/openclaw-termux-clipboard-fix-guide.md)** | Termux 剪贴板问题修复指南 |
 
 **请务必先阅读对应文档再开始安装！**
 
@@ -167,11 +197,17 @@ termux-install-openclaw/
 
 ## ✨ 如何选择安装方式？
 
-### Termux vs AidLux 对比
+### 三种安装方式对比
 
-| 对比项 | Termux + Ubuntu | AidLux |
-|--------|-----------------|--------|
-| 安装难度 | 中等（需要配置 proot-distro） | ⭐⭐⭐⭐⭐ 简单直接 |
+| 对比项 | Termux 原生 | Termux + Ubuntu | AidLux |
+|--------|-------------|-----------------|--------|
+| 安装难度 | ⭐⭐⭐⭐⭐ 最简单 | 中等 | ⭐⭐⭐⭐⭐ 简单 |
+| 安装耗时 | 10-15 分钟 | 30-60 分钟 | 15-20 分钟 |
+| 资源占用 | ⭐⭐⭐⭐⭐ 最低 | 中等 | 中等 |
+| 环境隔离 | 一般 | ⭐⭐⭐⭐⭐ 完整 Linux | ⭐⭐⭐⭐⭐ 完整 Linux |
+| 兼容性 | 良好 | ⭐⭐⭐⭐⭐ 最佳 | ⭐⭐⭐⭐⭐ 良好 |
+| 桌面环境 | 无 | 无 | ⭐⭐⭐⭐⭐ 有 |
+| 推荐度 | ⭐⭐⭐⭐⭐ **最推荐新手** | ✅ 生产环境 | ✅ 需要桌面环境 |
 | 环境兼容性 | ⭐⭐⭐⭐⭐ 与生产环境一致 | ⭐⭐⭐⭐⭐ 完整 Linux 环境 |
 | 安装耗时 | 30-60 分钟 | 15-20 分钟 |
 | 桌面环境 | 无（纯终端） | ⭐⭐⭐⭐⭐ 完整 Linux 桌面 |
