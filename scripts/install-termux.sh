@@ -352,7 +352,7 @@ $PKG_CMD strip-ansi 2>/dev/null || log_warn "strip-ansi 可能已安装"
 
 # 执行 OpenClaw 安装
 log_info "正在安装 openclaw-cn-termux..."
-if $PKG_CMD openclaw-cn-termux@0.2.1-beta.0; then
+if $PKG_CMD openclaw-cn-termux@0.2.1-beta.1; then
     log_ok "OpenClaw-CN-Termux 安装成功"
 else
     log_error "安装失败，请检查网络或 npm 配置"
